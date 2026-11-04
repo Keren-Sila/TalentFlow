@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= tituloPagina ? `${tituloPagina} | TalentFlow` : 'TalentFlow — Gestão de Treinamentos' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="/images/logo.svg" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+</head>
+<body>
+  <!-- Container de Notificações (Toast) -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Overlay para menu mobile -->
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+  <div class="app-layout">
+    <%- include('sidebar') %>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" id="btnToggleSidebar" class="btn-icon mobile-menu-btn" aria-label="Abrir menu lateral">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div>
+            <span class="topbar-eyebrow">Portal de Gestão de RH</span>
+            <h1 class="topbar-title"><%= tituloPagina || 'TalentFlow' %></h1>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <button type="button" class="btn btn-primary" data-action="abrir-modal-criar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Novo Treinamento</span>
+          </button>
+
+          <div class="user-profile-pill" title="Ambiente Corporativo RH">
+            <div class="user-avatar">RH</div>
+            <div class="user-info">
+              <span class="user-name">Gestão de Pessoas</span>
+              <span class="user-role">Administrador RH</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">

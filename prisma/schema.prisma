@@ -1,0 +1,20 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Treinamento {
+  id           Int      @id @default(autoincrement())
+  titulo       String   @db.VarChar(150)
+  instrutor    String   @db.VarChar(120)
+  data         DateTime
+  cargaHoraria Int
+  descricao    String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

@@ -1,0 +1,301 @@
+<%- include('partials/header') %>
+
+<% if (erro) { %>
+  <div class="alert alert-error">
+    <strong>Atenção:</strong> <%= erro %>
+  </div>
+<% } %>
+
+<!-- Hero Banner do Dashboard -->
+<section class="hero-banner">
+  <div class="hero-banner-content">
+    <span class="hero-badge">VISÃO EXECUTIVA DE CAPACITAÇÃO</span>
+    <h2 class="hero-title">Bem-vindo ao TalentFlow</h2>
+    <p class="hero-description">
+      Acompanhe os indicadores de desenvolvimento corporativo, gerencie o cronograma de capacitações da equipe e mantenha os treinamentos da empresa organizados em um único lugar.
+    </p>
+    <div class="hero-actions">
+      <button type="button" class="btn btn-light" data-action="abrir-modal-criar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Cadastrar Treinamento</span>
+      </button>
+      <a href="/treinamentos" class="btn btn-outline-light">
+        <span>Ver Todos os Treinamentos</span>
+      </a>
+    </div>
+  </div>
+  <div class="hero-banner-illustration" aria-hidden="true">
+    <div class="hero-stat-floating">
+      <span class="hero-stat-number"><%= indicadores.totalHoras %>h</span>
+      <span class="hero-stat-label">Carga Horária Total</span>
+    </div>
+  </div>
+</section>
+
+<!-- Cards de Indicadores (KPIs) -->
+<section class="kpi-grid" aria-label="Indicadores de Treinamentos">
+  <article class="kpi-card">
+    <div class="kpi-icon kpi-icon-navy">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+    </div>
+    <div class="kpi-info">
+      <span class="kpi-label">Treinamentos Cadastrados</span>
+      <strong class="kpi-value" id="kpiTotalTreinamentos"><%= indicadores.totalTreinamentos %></strong>
+      <span class="kpi-meta">Total registrado no sistema</span>
+    </div>
+  </article>
+
+  <article class="kpi-card">
+    <div class="kpi-icon kpi-icon-purple">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+    </div>
+    <div class="kpi-info">
+      <span class="kpi-label">Total de Horas</span>
+      <strong class="kpi-value" id="kpiTotalHoras"><%= indicadores.totalHoras %>h</strong>
+      <span class="kpi-meta">Horas de capacitação acumuladas</span>
+    </div>
+  </article>
+
+  <article class="kpi-card">
+    <div class="kpi-icon kpi-icon-indigo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+    </div>
+    <div class="kpi-info">
+      <span class="kpi-label">Treinamentos Próximos</span>
+      <strong class="kpi-value" id="kpiProximos"><%= indicadores.proximosCount %></strong>
+      <span class="kpi-meta">Programados no calendário</span>
+    </div>
+  </article>
+
+  <article class="kpi-card">
+    <div class="kpi-icon kpi-icon-emerald">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    </div>
+    <div class="kpi-info">
+      <span class="kpi-label">Treinamentos Realizados</span>
+      <strong class="kpi-value" id="kpiRealizados"><%= indicadores.realizadosCount %></strong>
+      <span class="kpi-meta">Concluídos até hoje</span>
+    </div>
+  </article>
+</section>
+
+<!-- Colunas de Próximos e Realizados -->
+<section class="dashboard-columns">
+  <!-- Próximos Treinamentos -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Próximos Treinamentos</h3>
+        <p class="card-subtitle">Capacitações agendadas para as próximas datas</p>
+      </div>
+      <a href="/treinamentos?status=proximos" class="btn-link">Ver todos &rarr;</a>
+    </div>
+
+    <div class="card-body">
+      <% if (indicadores.proximosTreinamentos && indicadores.proximosTreinamentos.length > 0) { %>
+        <ul class="training-feed">
+          <% indicadores.proximosTreinamentos.forEach((item) => { %>
+            <li class="training-feed-item">
+              <div class="feed-date-box upcoming">
+                <span class="feed-date-day"><%= formatarData(item.data).split('/')[0] %></span>
+                <span class="feed-date-month"><%= formatarData(item.data).slice(3, 5) %>/<%= formatarData(item.data).slice(8, 10) %></span>
+              </div>
+              <div class="feed-details">
+                <a href="/treinamentos/<%= item.id %>" class="feed-title"><%= item.titulo %></a>
+                <div class="feed-meta">
+                  <span>Instrutor(a): <strong><%= item.instrutor %></strong></span>
+                  <span class="meta-dot">&bull;</span>
+                  <span><%= item.cargaHoraria %>h</span>
+                </div>
+              </div>
+              <div class="feed-actions">
+                <span class="badge badge-upcoming">Agendado</span>
+                <a href="/treinamentos/<%= item.id %>" class="btn-icon-sm" title="Ver detalhes">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </a>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <div class="empty-state-compact">
+          <p>Nenhum treinamento futuro agendado no momento.</p>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="abrir-modal-criar">
+            Agendar Treinamento
+          </button>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Treinamentos Realizados -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Treinamentos Realizados</h3>
+        <p class="card-subtitle">Histórico recente de treinamentos concluídos</p>
+      </div>
+      <a href="/treinamentos?status=realizados" class="btn-link">Ver histórico &rarr;</a>
+    </div>
+
+    <div class="card-body">
+      <% if (indicadores.ultimosRealizados && indicadores.ultimosRealizados.length > 0) { %>
+        <ul class="training-feed">
+          <% indicadores.ultimosRealizados.forEach((item) => { %>
+            <li class="training-feed-item">
+              <div class="feed-date-box completed">
+                <span class="feed-date-day"><%= formatarData(item.data).split('/')[0] %></span>
+                <span class="feed-date-month"><%= formatarData(item.data).slice(3, 5) %>/<%= formatarData(item.data).slice(8, 10) %></span>
+              </div>
+              <div class="feed-details">
+                <a href="/treinamentos/<%= item.id %>" class="feed-title"><%= item.titulo %></a>
+                <div class="feed-meta">
+                  <span>Instrutor(a): <strong><%= item.instrutor %></strong></span>
+                  <span class="meta-dot">&bull;</span>
+                  <span><%= item.cargaHoraria %>h</span>
+                </div>
+              </div>
+              <div class="feed-actions">
+                <span class="badge badge-completed">Realizado</span>
+                <a href="/treinamentos/<%= item.id %>" class="btn-icon-sm" title="Ver detalhes">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </a>
+              </div>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <div class="empty-state-compact">
+          <p>Ainda não há treinamentos concluídos no histórico.</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Visão Geral da Tabela no Dashboard -->
+<section class="card dashboard-table-section">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">Quadro Geral de Treinamentos</h3>
+      <p class="card-subtitle">Acesso rápido para consultar, editar ou excluir registros</p>
+    </div>
+    <div class="card-header-actions">
+      <a href="/treinamentos" class="btn btn-secondary btn-sm">Ir para Gestão Completa</a>
+    </div>
+  </div>
+
+  <% if (indicadores.todosTreinamentos && indicadores.todosTreinamentos.length > 0) { %>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Treinamento</th>
+            <th>Instrutor(a)</th>
+            <th>Data</th>
+            <th>Carga Horária</th>
+            <th>Status</th>
+            <th class="text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% indicadores.todosTreinamentos.slice(0, 6).forEach((t) => { 
+               const statusObj = obterStatusTreinamento(t.data);
+          %>
+            <tr>
+              <td>
+                <div class="table-primary-cell">
+                  <a href="/treinamentos/<%= t.id %>" class="table-title-link"><%= t.titulo %></a>
+                  <span class="table-desc-preview"><%= t.descricao || 'Sem descrição complementar.' %></span>
+                </div>
+              </td>
+              <td>
+                <div class="instructor-cell">
+                  <span class="instructor-avatar"><%= t.instrutor.charAt(0).toUpperCase() %></span>
+                  <span><%= t.instrutor %></span>
+                </div>
+              </td>
+              <td><span class="table-date"><%= formatarData(t.data) %></span></td>
+              <td><span class="workload-pill"><%= t.cargaHoraria %> horas</span></td>
+              <td>
+                <span class="badge <%= statusObj.classe %>"><%= statusObj.rotulo %></span>
+              </td>
+              <td class="text-right">
+                <div class="action-buttons">
+                  <a href="/treinamentos/<%= t.id %>" class="btn-action view" title="Consultar detalhes">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </a>
+                  <button
+                    type="button"
+                    class="btn-action edit"
+                    title="Editar treinamento"
+                    data-action="abrir-modal-editar"
+                    data-id="<%= t.id %>"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-action delete"
+                    title="Excluir treinamento"
+                    data-action="abrir-modal-excluir"
+                    data-id="<%= t.id %>"
+                    data-titulo="<%= t.titulo %>"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+      </div>
+      <h4>Nenhum treinamento cadastrado ainda</h4>
+      <p>Comece cadastrando o primeiro treinamento corporativo da sua empresa.</p>
+      <button type="button" class="btn btn-primary" data-action="abrir-modal-criar">
+        + Cadastrar Primeiro Treinamento
+      </button>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/footer') %>

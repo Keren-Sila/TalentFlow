@@ -1,0 +1,130 @@
+<%- include('partials/header') %>
+
+<!-- Navegação Breadcrumb -->
+<nav class="breadcrumb" aria-label="Navegação estrutural">
+  <a href="/">Dashboard</a>
+  <span class="breadcrumb-separator">/</span>
+  <a href="/treinamentos">Treinamentos</a>
+  <span class="breadcrumb-separator">/</span>
+  <span class="breadcrumb-current"><%= treinamento ? treinamento.titulo : 'Detalhes' %></span>
+</nav>
+
+<% if (erro || !treinamento) { %>
+  <section class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon danger">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h4><%= erro || 'Treinamento não encontrado' %></h4>
+      <p>Verifique se o endereço está correto ou volte para a listagem de treinamentos.</p>
+      <div class="empty-state-actions">
+        <a href="/treinamentos" class="btn btn-primary">&larr; Voltar para Treinamentos</a>
+      </div>
+    </div>
+  </section>
+<% } else { 
+     const statusObj = obterStatusTreinamento(treinamento.data);
+%>
+  <section class="detail-container">
+    <div class="card detail-main-card">
+      <div class="detail-header">
+        <div class="detail-header-badges">
+          <span class="id-badge">Registro #<%= treinamento.id %></span>
+          <span class="badge <%= statusObj.classe %>"><%= statusObj.rotulo %></span>
+        </div>
+
+        <h2 class="detail-title"><%= treinamento.titulo %></h2>
+
+        <div class="detail-actions-bar">
+          <a href="/treinamentos" class="btn btn-secondary">
+            &larr; Voltar para a Lista
+          </a>
+          <div class="detail-actions-right">
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-action="abrir-modal-editar"
+              data-id="<%= treinamento.id %>"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              <span>Editar Informações</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              data-action="abrir-modal-excluir"
+              data-id="<%= treinamento.id %>"
+              data-titulo="<%= treinamento.titulo %>"
+              data-redirect="/treinamentos"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>Excluir</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-meta-grid">
+        <div class="detail-meta-card">
+          <span class="detail-meta-label">Instrutor(a) Responsável</span>
+          <div class="detail-meta-value-row">
+            <span class="instructor-avatar lg"><%= treinamento.instrutor.charAt(0).toUpperCase() %></span>
+            <strong><%= treinamento.instrutor %></strong>
+          </div>
+        </div>
+
+        <div class="detail-meta-card">
+          <span class="detail-meta-label">Data do Treinamento</span>
+          <div class="detail-meta-value-row">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <strong><%= formatarDataExtenso(treinamento.data) %></strong>
+          </div>
+        </div>
+
+        <div class="detail-meta-card">
+          <span class="detail-meta-label">Carga Horária</span>
+          <div class="detail-meta-value-row">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <strong><%= treinamento.cargaHoraria %> horas</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3 class="detail-section-title">Descrição e Conteúdo Programático</h3>
+        <div class="detail-description-box">
+          <% if (treinamento.descricao && treinamento.descricao.trim() !== '') { %>
+            <p><%= treinamento.descricao %></p>
+          <% } else { %>
+            <p class="text-muted">Nenhuma descrição detalhada foi informada para este treinamento.</p>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="detail-footer-timestamps">
+        <span>Cadastrado em: <strong><%= formatarData(treinamento.createdAt) %></strong></span>
+        <span>Última atualização: <strong><%= formatarData(treinamento.updatedAt) %></strong></span>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<%- include('partials/footer') %>
