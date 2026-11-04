@@ -50,9 +50,16 @@ class PageController {
 
       const indicadores = await Treinamento.obterIndicadores();
 
+      const abaAtiva =
+        status === "proximos"
+          ? "agendados"
+          : status === "realizados"
+            ? "realizados"
+            : "treinamentos";
+
       return res.render("treinamentos", {
         tituloPagina: "Gestão de Treinamentos",
-        paginaAtiva: "treinamentos",
+        paginaAtiva: abaAtiva,
         treinamentos,
         indicadores,
         filtros: { busca, status, ordenar },
@@ -83,7 +90,7 @@ class PageController {
   static async renderDetalheTreinamento(req, res) {
     try {
       const id = Number(req.params.id);
-      if (Number.isNaN(id) || id <= 0) {
+      if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).render("treinamento-detalhe", {
           tituloPagina: "Treinamento Inválido",
           paginaAtiva: "treinamentos",

@@ -3,6 +3,7 @@ import app from "./server.js";
 import prisma from "./src/config/prisma.js";
 
 const PORT = Number(process.env.PORT) || 3000;
+let servidorHttp = null;
 
 async function iniciarServidor() {
   try {
@@ -10,7 +11,7 @@ async function iniciarServidor() {
     await prisma.$queryRaw`SELECT 1`;
     console.log("✅ Conexão com o banco de dados MySQL estabelecida com sucesso!");
 
-    app.listen(PORT, () => {
+    servidorHttp = app.listen(PORT, () => {
       console.log(`🚀 TalentFlow rodando em: http://localhost:${PORT}`);
       console.log(`📊 Dashboard: http://localhost:${PORT}/`);
       console.log(`📚 Gestão de Treinamentos: http://localhost:${PORT}/treinamentos`);
@@ -18,8 +19,27 @@ async function iniciarServidor() {
     });
   } catch (error) {
     console.error("❌ Falha ao iniciar o servidor TalentFlow:", error.message);
+    await prisma.$disconnect().catch(() => {});
     process.exit(1);
   }
 }
+
+async function encerrarServidor(sinal) {
+  console.log(`\n🛑 Sinal ${sinal} recebido. Encerrando o TalentFlow com segurança...`);
+  try {
+    if (servidorHttp) {
+      await new Promise((resolve) => servidorHttp.close(resolve));
+    }
+    await prisma.$disconnect();
+    console.log("✅ Conexão com o MySQL encerrada.");
+    process.exit(0);
+  } catch (error) {
+    console.error("❌ Erro ao encerrar o servidor:", error.message);
+    process.exit(1);
+  }
+}
+
+process.on("SIGINT", () => encerrarServidor("SIGINT"));
+process.on("SIGTERM", () => encerrarServidor("SIGTERM"));
 
 iniciarServidor();

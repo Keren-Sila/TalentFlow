@@ -54,7 +54,10 @@ app.locals.formatarDataInput = (data) => {
 
 app.locals.obterStatusTreinamento = (data) => {
   const hoje = new Date();
+  hoje.setUTCHours(0, 0, 0, 0);
+
   const dataTreinamento = new Date(data);
+
   if (dataTreinamento >= hoje) {
     return {
       rotulo: "Agendado",
@@ -100,7 +103,6 @@ app.use((err, req, res, next) => {
     return res.status(500).json({
       sucesso: false,
       mensagem: "Erro interno no servidor.",
-      erro: err.message,
     });
   }
 

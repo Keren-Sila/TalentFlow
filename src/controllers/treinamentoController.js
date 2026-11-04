@@ -6,15 +6,19 @@ import Treinamento from "../models/Treinamento.js";
 function validarDadosTreinamento(dados) {
   const erros = [];
 
-  if (!dados.titulo || String(dados.titulo).trim().length < 3) {
+  if (!dados.titulo || typeof dados.titulo !== "string" || dados.titulo.trim().length < 3) {
     erros.push("O título é obrigatório e deve ter pelo menos 3 caracteres.");
-  } else if (String(dados.titulo).trim().length > 150) {
+  } else if (dados.titulo.trim().length > 150) {
     erros.push("O título deve ter no máximo 150 caracteres.");
   }
 
-  if (!dados.instrutor || String(dados.instrutor).trim().length < 2) {
+  if (
+    !dados.instrutor ||
+    typeof dados.instrutor !== "string" ||
+    dados.instrutor.trim().length < 2
+  ) {
     erros.push("O nome do instrutor é obrigatório e deve ter pelo menos 2 caracteres.");
-  } else if (String(dados.instrutor).trim().length > 120) {
+  } else if (dados.instrutor.trim().length > 120) {
     erros.push("O nome do instrutor deve ter no máximo 120 caracteres.");
   }
 
@@ -41,6 +45,16 @@ function validarDadosTreinamento(dados) {
     erros.push("A carga horária não pode ultrapassar 1000 horas.");
   }
 
+  if (
+    dados.descricao !== undefined &&
+    dados.descricao !== null &&
+    typeof dados.descricao !== "string"
+  ) {
+    erros.push("A descrição deve ser um texto válido.");
+  } else if (typeof dados.descricao === "string" && dados.descricao.trim().length > 2000) {
+    erros.push("A descrição deve ter no máximo 2000 caracteres.");
+  }
+
   return erros;
 }
 
@@ -64,7 +78,6 @@ class TreinamentoController {
       return res.status(500).json({
         sucesso: false,
         mensagem: "Erro interno ao listar os treinamentos.",
-        erro: error.message,
       });
     }
   }
@@ -76,10 +89,10 @@ class TreinamentoController {
   static async buscarPorId(req, res) {
     try {
       const id = Number(req.params.id);
-      if (Number.isNaN(id) || id <= 0) {
+      if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({
           sucesso: false,
-          mensagem: "ID do treinamento inválido.",
+          mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
         });
       }
 
@@ -100,7 +113,6 @@ class TreinamentoController {
       return res.status(500).json({
         sucesso: false,
         mensagem: "Erro interno ao consultar o treinamento.",
-        erro: error.message,
       });
     }
   }
@@ -112,7 +124,13 @@ class TreinamentoController {
   static async criar(req, res) {
     try {
       const { titulo, instrutor, data, cargaHoraria, descricao } = req.body;
-      const erros = validarDadosTreinamento({ titulo, instrutor, data, cargaHoraria });
+      const erros = validarDadosTreinamento({
+        titulo,
+        instrutor,
+        data,
+        cargaHoraria,
+        descricao,
+      });
 
       if (erros.length > 0) {
         return res.status(400).json({
@@ -140,7 +158,6 @@ class TreinamentoController {
       return res.status(500).json({
         sucesso: false,
         mensagem: "Erro interno ao cadastrar o treinamento.",
-        erro: error.message,
       });
     }
   }
@@ -152,10 +169,10 @@ class TreinamentoController {
   static async atualizar(req, res) {
     try {
       const id = Number(req.params.id);
-      if (Number.isNaN(id) || id <= 0) {
+      if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({
           sucesso: false,
-          mensagem: "ID do treinamento inválido.",
+          mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
         });
       }
 
@@ -168,7 +185,13 @@ class TreinamentoController {
       }
 
       const { titulo, instrutor, data, cargaHoraria, descricao } = req.body;
-      const erros = validarDadosTreinamento({ titulo, instrutor, data, cargaHoraria });
+      const erros = validarDadosTreinamento({
+        titulo,
+        instrutor,
+        data,
+        cargaHoraria,
+        descricao,
+      });
 
       if (erros.length > 0) {
         return res.status(400).json({
@@ -196,7 +219,6 @@ class TreinamentoController {
       return res.status(500).json({
         sucesso: false,
         mensagem: "Erro interno ao atualizar o treinamento.",
-        erro: error.message,
       });
     }
   }
@@ -208,10 +230,10 @@ class TreinamentoController {
   static async excluir(req, res) {
     try {
       const id = Number(req.params.id);
-      if (Number.isNaN(id) || id <= 0) {
+      if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({
           sucesso: false,
-          mensagem: "ID do treinamento inválido.",
+          mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
         });
       }
 
@@ -234,7 +256,6 @@ class TreinamentoController {
       return res.status(500).json({
         sucesso: false,
         mensagem: "Erro interno ao excluir o treinamento.",
-        erro: error.message,
       });
     }
   }

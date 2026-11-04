@@ -1,19 +1,29 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= tituloPagina ? `${tituloPagina} | TalentFlow — RH Organizado` : 'TalentFlow — RH Organizado' %></title>
+  <title><%= tituloPagina ? `${tituloPagina} | TalentFlow` : 'TalentFlow — Gestão de Treinamentos' %></title>
+  <script>
+    (function () {
+      try {
+        var temaSalvo = localStorage.getItem("talentflow_theme") || "light";
+        document.documentElement.setAttribute("data-theme", temaSalvo);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/svg+xml" href="/images/logo.svg" />
   <link rel="stylesheet" href="/css/main.css" />
   <link rel="stylesheet" href="/css/components.css" />
   <link rel="stylesheet" href="/css/responsive.css" />
 </head>
 <body>
-  <!-- Luzes de fundo (Ambient Glows do Design) -->
+  <!-- Luzes de fundo suaves (Ambient Glows) -->
   <div class="ambient-bg" aria-hidden="true">
     <div class="glow glow-purple"></div>
     <div class="glow glow-teal"></div>

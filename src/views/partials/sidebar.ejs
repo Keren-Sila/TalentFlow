@@ -1,31 +1,56 @@
-<!-- Barra de Navegação Flutuante em Pílula (Estilo RH Organizado / TalentFlow) -->
+<!-- Barra de Navegação Flutuante em Pílula -->
 <header class="top-pill-wrapper">
   <nav class="pill-navbar" aria-label="Navegação Principal">
     <a href="/" class="pill-brand">
-      RH Organizado <span class="pill-brand-tag">TalentFlow</span>
+      TalentFlow
     </a>
 
     <div class="pill-nav-links" id="sidebar">
-      <a href="/" class="pill-link <%= paginaAtiva === 'dashboard' ? 'active' : '' %>">
+      <a href="/" data-nav="inicio" class="pill-link <%= paginaAtiva === 'dashboard' ? 'active' : '' %>">
         Início
       </a>
-      <a href="/#secao-pessoas" class="pill-link">
+      <a href="/#secao-pessoas" data-nav="pessoas" class="pill-link <%= paginaAtiva === 'pessoas' ? 'active' : '' %>">
         Pessoas
       </a>
-      <a href="/treinamentos?status=realizados" class="pill-link">
-        Realizados
-      </a>
-      <a href="/treinamentos" class="pill-link <%= paginaAtiva === 'treinamentos' ? 'active' : '' %>">
+      <a href="/treinamentos" data-nav="treinamentos" class="pill-link <%= paginaAtiva === 'treinamentos' ? 'active' : '' %>">
         Treinamentos
       </a>
-      <a href="/treinamentos?status=proximos" class="pill-link">
+      <a href="/treinamentos?status=proximos" data-nav="agendados" class="pill-link <%= paginaAtiva === 'agendados' ? 'active' : '' %>">
         Agendados
+      </a>
+      <a href="/treinamentos?status=realizados" data-nav="realizados" class="pill-link <%= paginaAtiva === 'realizados' ? 'active' : '' %>">
+        Realizados
       </a>
     </div>
 
     <div class="pill-nav-actions">
       <button type="button" class="pill-cta-btn" data-action="abrir-modal-criar">
         + Agendar
+      </button>
+
+      <button
+        type="button"
+        id="btnToggleTheme"
+        class="theme-toggle-btn"
+        aria-label="Alternar entre tema claro e escuro"
+        title="Alternar tema Claro / Escuro"
+      >
+        <!-- Ícone Lua (exibido no Tema Claro para mudar para Escuro) -->
+        <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <!-- Ícone Sol (exibido no Tema Escuro para mudar para Claro) -->
+        <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
       </button>
     </div>
   </nav>

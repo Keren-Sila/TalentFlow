@@ -9,7 +9,7 @@ class Treinamento {
     const { busca, status, ordenar } = filtros;
     const where = {};
 
-    if (busca && busca.trim() !== "") {
+    if (busca && typeof busca === "string" && busca.trim() !== "") {
       const termo = busca.trim();
       where.OR = [
         { titulo: { contains: termo } },
@@ -18,11 +18,13 @@ class Treinamento {
       ];
     }
 
-    const agora = new Date();
+    const hoje = new Date();
+    hoje.setUTCHours(0, 0, 0, 0);
+
     if (status === "proximos") {
-      where.data = { gte: agora };
+      where.data = { gte: hoje };
     } else if (status === "realizados") {
-      where.data = { lt: agora };
+      where.data = { lt: hoje };
     }
 
     let orderBy = { data: "asc" };
@@ -57,13 +59,18 @@ class Treinamento {
    * @param {Object} dados - { titulo, instrutor, data, cargaHoraria, descricao }
    */
   static async criar(dados) {
+    const descricaoLimpa =
+      typeof dados.descricao === "string" && dados.descricao.trim() !== ""
+        ? dados.descricao.trim()
+        : null;
+
     return await prisma.treinamento.create({
       data: {
-        titulo: dados.titulo.trim(),
-        instrutor: dados.instrutor.trim(),
+        titulo: String(dados.titulo).trim(),
+        instrutor: String(dados.instrutor).trim(),
         data: new Date(dados.data),
         cargaHoraria: Number(dados.cargaHoraria),
-        descricao: dados.descricao ? dados.descricao.trim() : null,
+        descricao: descricaoLimpa,
       },
     });
   }
@@ -74,14 +81,19 @@ class Treinamento {
    * @param {Object} dados - { titulo, instrutor, data, cargaHoraria, descricao }
    */
   static async atualizar(id, dados) {
+    const descricaoLimpa =
+      typeof dados.descricao === "string" && dados.descricao.trim() !== ""
+        ? dados.descricao.trim()
+        : null;
+
     return await prisma.treinamento.update({
       where: { id: Number(id) },
       data: {
-        titulo: dados.titulo.trim(),
-        instrutor: dados.instrutor.trim(),
+        titulo: String(dados.titulo).trim(),
+        instrutor: String(dados.instrutor).trim(),
         data: new Date(dados.data),
         cargaHoraria: Number(dados.cargaHoraria),
-        descricao: dados.descricao ? dados.descricao.trim() : null,
+        descricao: descricaoLimpa,
       },
     });
   }
@@ -104,12 +116,16 @@ class Treinamento {
       orderBy: { data: "asc" },
     });
 
-    const agora = new Date();
+    const hoje = new Date();
+    hoje.setUTCHours(0, 0, 0, 0);
+
     const totalTreinamentos = todos.length;
     const totalHoras = todos.reduce((acc, item) => acc + (item.cargaHoraria || 0), 0);
-    const proximosLista = todos.filter((item) => new Date(item.data) >= agora);
+
+    const proximosLista = todos.filter((item) => new Date(item.data) >= hoje);
+
     const realizadosLista = todos
-      .filter((item) => new Date(item.data) < agora)
+      .filter((item) => new Date(item.data) < hoje)
       .sort((a, b) => new Date(b.data) - new Date(a.data));
 
     return {

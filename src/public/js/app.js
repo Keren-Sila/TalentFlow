@@ -1,11 +1,11 @@
 /* ==========================================================================
    TalentFlow — app.js
-   Controle de Menu Mobile, Notificações (Toast) e Utilitários Globais de UI
+   Controle de Tema (Claro padrão / Escuro opcional), Navegação Ativa e Notificações
    ========================================================================== */
 
 window.TalentFlowUI = {
   /**
-   * Exibe uma notificação Toast no canto superior direito
+   * Exibe uma notificação Toast no canto superior direito usando textContent (seguro contra XSS)
    * @param {string} mensagem
    * @param {'success' | 'error' | 'info'} tipo
    */
@@ -15,9 +15,10 @@ window.TalentFlowUI = {
 
     const toast = document.createElement("div");
     toast.className = `toast toast-${tipo}`;
-    toast.innerHTML = `
-      <span>${mensagem}</span>
-    `;
+
+    const span = document.createElement("span");
+    span.textContent = mensagem;
+    toast.appendChild(span);
 
     container.appendChild(toast);
 
@@ -59,27 +60,93 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. Verificar notificações após reload
   window.TalentFlowUI.verificarNotificacaoAgendada();
 
-  // 2. Controle da Sidebar no Mobile
-  const sidebar = document.getElementById("sidebar");
-  const overlay = document.getElementById("sidebarOverlay");
-  const btnToggle = document.getElementById("btnToggleSidebar");
-  const btnClose = document.getElementById("btnCloseSidebar");
+  // 2. Alternância de Tema (Claro como padrão / Escuro opcional)
+  const btnToggleTheme = document.getElementById("btnToggleTheme");
 
-  function abrirMenuMobile() {
-    if (sidebar && overlay) {
-      sidebar.classList.add("open");
-      overlay.classList.add("active");
+  function aplicarTema(tema) {
+    const temaFinal = tema === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", temaFinal);
+    try {
+      localStorage.setItem("talentflow_theme", temaFinal);
+    } catch {
+      // Ignora erro de storage
+    }
+    if (btnToggleTheme) {
+      btnToggleTheme.setAttribute(
+        "title",
+        temaFinal === "dark" ? "Mudar para Tema Claro" : "Mudar para Tema Escuro"
+      );
     }
   }
 
-  function fecharMenuMobile() {
-    if (sidebar && overlay) {
-      sidebar.classList.remove("open");
-      overlay.classList.remove("active");
+  const temaAtual = document.documentElement.getAttribute("data-theme") || "light";
+  aplicarTema(temaAtual);
+
+  if (btnToggleTheme) {
+    btnToggleTheme.addEventListener("click", () => {
+      const ativo = document.documentElement.getAttribute("data-theme") || "light";
+      const proximo = ativo === "dark" ? "light" : "dark";
+      aplicarTema(proximo);
+    });
+  }
+
+  // 3. Sincronização do destaque ativo na barra de navegação (Início, Pessoas, Treinamentos, Agendados, Realizados)
+  const navLinks = document.querySelectorAll(".pill-nav-links .pill-link");
+
+  function definirLinkAtivo(chaveNav) {
+    navLinks.forEach((link) => {
+      if (link.getAttribute("data-nav") === chaveNav) {
+        link.classList.add("active");
+      } else {
+        link.classList.remove("active");
+      }
+    });
+  }
+
+  function sincronizarMenuPelaUrl() {
+    const pathname = window.location.pathname;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    const hash = window.location.hash;
+
+    if (pathname === "/" || pathname === "/dashboard") {
+      if (hash === "#secao-pessoas") {
+        definirLinkAtivo("pessoas");
+      } else {
+        definirLinkAtivo("inicio");
+      }
+      return;
+    }
+
+    if (pathname.startsWith("/treinamentos")) {
+      if (status === "proximos") {
+        definirLinkAtivo("agendados");
+      } else if (status === "realizados") {
+        definirLinkAtivo("realizados");
+      } else {
+        definirLinkAtivo("treinamentos");
+      }
     }
   }
 
-  if (btnToggle) btnToggle.addEventListener("click", abrirMenuMobile);
-  if (btnClose) btnClose.addEventListener("click", fecharMenuMobile);
-  if (overlay) overlay.addEventListener("click", fecharMenuMobile);
+  // Atualiza ao carregar a página e quando o hash (#secao-pessoas) mudar
+  sincronizarMenuPelaUrl();
+  window.addEventListener("hashchange", sincronizarMenuPelaUrl);
+
+  // Move a cor/destaque imediatamente quando o usuário clica em qualquer opção
+  navLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const chave = link.getAttribute("data-nav");
+      if (chave) {
+        definirLinkAtivo(chave);
+      }
+
+      // Se clicou em "Início" já estando na home com #secao-pessoas, limpa o hash e sobe a página
+      if (chave === "inicio" && window.location.pathname === "/" && window.location.hash) {
+        event.preventDefault();
+        history.pushState("", document.title, window.location.pathname + window.location.search);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  });
 });

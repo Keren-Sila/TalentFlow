@@ -22,7 +22,7 @@
   // Constrói lista de 8 pessoas combinando instrutores reais do banco + integrantes do time
   const instrutoresBanco = (indicadores.todosTreinamentos || []).map((t) => ({
     nome: t.instrutor.replace(/^(Prof\.ª?|Dra?\.|Eng\.|Psic\.)\s*/i, ''),
-    status: new Date(t.data) >= new Date() ? 'Em treinamento' : 'Presente',
+    status: obterStatusTreinamento(t.data).classe === 'badge-upcoming' ? 'Em treinamento' : 'Presente',
     treinamentoId: t.id
   }));
 
