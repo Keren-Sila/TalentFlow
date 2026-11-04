@@ -27,7 +27,7 @@
     <div class="bento-card detail-main-card">
       <div class="detail-header">
         <div class="detail-header-badges">
-          <span class="id-badge">[Registro #<%= pad2(treinamento.id) %>]</span>
+          <span class="id-badge">Registro #<%= pad2(treinamento.id) %></span>
           <span class="badge <%= statusObj.classe %>"><%= statusObj.rotulo %></span>
         </div>
 
@@ -72,14 +72,14 @@
         <div class="attention-item">
           <span class="detail-meta-label">Data do Treinamento</span>
           <div class="detail-meta-value-row">
-            <strong class="text-mint">[<%= formatarDataExtenso(treinamento.data) %>]</strong>
+            <strong class="text-mint"><%= formatarDataExtenso(treinamento.data) %></strong>
           </div>
         </div>
 
         <div class="attention-item">
           <span class="detail-meta-label">Carga Horária</span>
           <div class="detail-meta-value-row">
-            <strong class="text-lavender">[<%= pad2(treinamento.cargaHoraria) %> horas]</strong>
+            <strong class="text-lavender"><%= treinamento.cargaHoraria %> horas</strong>
           </div>
         </div>
       </div>
@@ -96,8 +96,8 @@
       </div>
 
       <div class="detail-footer-timestamps">
-        <span>Cadastrado em: <strong>[<%= formatarData(treinamento.createdAt) %>]</strong></span>
-        <span>Última atualização: <strong>[<%= formatarData(treinamento.updatedAt) %>]</strong></span>
+        <span>Cadastrado em: <strong><%= formatarData(treinamento.createdAt) %></strong></span>
+        <span>Última atualização: <strong><%= formatarData(treinamento.updatedAt) %></strong></span>
       </div>
     </div>
   </section>

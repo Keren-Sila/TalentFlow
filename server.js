@@ -1,6 +1,10 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  normalizarDataCalendarioUTC,
+  obterInicioDiaLocalEmUTC,
+} from "./src/models/Treinamento.js";
 import pageRoutes from "./src/routes/pageRoutes.js";
 import treinamentoRoutes from "./src/routes/treinamentoRoutes.js";
 
@@ -33,6 +37,17 @@ app.locals.formatarData = (data) => {
   });
 };
 
+app.locals.formatarDataCurta = (data) => {
+  if (!data) return "—";
+  const d = new Date(data);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "UTC",
+  });
+};
+
 app.locals.formatarDataExtenso = (data) => {
   if (!data) return "—";
   const d = new Date(data);
@@ -53,18 +68,25 @@ app.locals.formatarDataInput = (data) => {
 };
 
 app.locals.obterStatusTreinamento = (data) => {
-  const hoje = new Date();
-  hoje.setUTCHours(0, 0, 0, 0);
+  const hoje = obterInicioDiaLocalEmUTC();
+  const dataTreinamento = normalizarDataCalendarioUTC(data);
 
-  const dataTreinamento = new Date(data);
+  if (dataTreinamento.getTime() === hoje.getTime()) {
+    return {
+      rotulo: "Hoje",
+      classe: "badge-upcoming",
+      icone: "calendar",
+    };
+  }
 
-  if (dataTreinamento >= hoje) {
+  if (dataTreinamento.getTime() > hoje.getTime()) {
     return {
       rotulo: "Agendado",
       classe: "badge-upcoming",
       icone: "calendar",
     };
   }
+
   return {
     rotulo: "Realizado",
     classe: "badge-completed",

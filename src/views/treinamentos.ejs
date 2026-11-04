@@ -42,15 +42,15 @@
     <div class="command-actions">
       <select id="selectStatus" name="status" class="command-select" aria-label="Filtrar por status">
         <option value="todos" <%= filtros.status === 'todos' ? 'selected' : '' %>>Status: Todos</option>
-        <option value="proximos" <%= filtros.status === 'proximos' ? 'selected' : '' %>>Em treinamento (Próximos)</option>
+        <option value="proximos" <%= filtros.status === 'proximos' ? 'selected' : '' %>>Agendados (Próximos)</option>
         <option value="realizados" <%= filtros.status === 'realizados' ? 'selected' : '' %>>Realizados (Concluídos)</option>
       </select>
 
       <select id="selectOrdenar" name="ordenar" class="command-select" aria-label="Ordenar por">
-        <option value="data_asc" <%= filtros.ordenar === 'data_asc' ? 'selected' : '' %>>Data (Próximos)</option>
-        <option value="data_desc" <%= filtros.ordenar === 'data_desc' ? 'selected' : '' %>>Data (Recentes)</option>
+        <option value="data_asc" <%= filtros.ordenar === 'data_asc' ? 'selected' : '' %>>Data (Mais próximos)</option>
+        <option value="data_desc" <%= filtros.ordenar === 'data_desc' ? 'selected' : '' %>>Data (Mais recentes)</option>
         <option value="titulo_asc" <%= filtros.ordenar === 'titulo_asc' ? 'selected' : '' %>>Título (A-Z)</option>
-        <option value="carga_desc" <%= filtros.ordenar === 'carga_desc' ? 'selected' : '' %>>Maior Carga</option>
+        <option value="carga_desc" <%= filtros.ordenar === 'carga_desc' ? 'selected' : '' %>>Maior Carga Horária</option>
       </select>
 
       <% if (filtros.busca || (filtros.status && filtros.status !== 'todos') || (filtros.ordenar && filtros.ordenar !== 'data_asc')) { %>
@@ -67,22 +67,22 @@
   <div class="bento-mini-card">
     <span class="legend-dot dot-lavender"></span>
     <span class="summary-pill-label">Cadastrados</span>
-    <strong class="summary-pill-value">[<%= pad2(indicadores.totalTreinamentos) %>]</strong>
+    <strong class="summary-pill-value"><%= pad2(indicadores.totalTreinamentos) %></strong>
   </div>
   <div class="bento-mini-card">
     <span class="legend-dot dot-mint"></span>
-    <span class="summary-pill-label">Em treinamento</span>
-    <strong class="summary-pill-value text-mint">[<%= pad2(indicadores.proximosCount) %>]</strong>
+    <span class="summary-pill-label">Agendados</span>
+    <strong class="summary-pill-value text-mint"><%= pad2(indicadores.proximosCount) %></strong>
   </div>
   <div class="bento-mini-card">
     <span class="legend-dot dot-coral"></span>
     <span class="summary-pill-label">Realizados</span>
-    <strong class="summary-pill-value text-coral">[<%= pad2(indicadores.realizadosCount) %>]</strong>
+    <strong class="summary-pill-value text-coral"><%= pad2(indicadores.realizadosCount) %></strong>
   </div>
   <div class="bento-mini-card">
     <span class="legend-dot dot-yellow"></span>
     <span class="summary-pill-label">Total de Horas</span>
-    <strong class="summary-pill-value">[<%= pad2(indicadores.totalHoras) %>h]</strong>
+    <strong class="summary-pill-value"><%= indicadores.totalHoras %>h</strong>
   </div>
 </section>
 
@@ -92,7 +92,7 @@
     <div>
       <h2 class="bento-card-title" style="margin-bottom: 4px;">Catálogo de Treinamentos</h2>
       <p class="bento-subtle-tag">
-        Exibindo <strong id="contadorRegistros">[<%= pad2(treinamentos.length) %>]</strong>
+        Exibindo <strong id="contadorRegistros"><%= treinamentos.length %></strong>
         <%= treinamentos.length === 1 ? 'registro encontrado' : 'registros encontrados' %>
       </p>
     </div>
@@ -121,7 +121,7 @@
                const corAvatar = coresAvatares[idx % coresAvatares.length];
           %>
             <tr class="training-row">
-              <td><span class="id-badge">[#<%= pad2(t.id) %>]</span></td>
+              <td><span class="id-badge">#<%= pad2(t.id) %></span></td>
               <td>
                 <div class="table-primary-cell">
                   <a href="/treinamentos/<%= t.id %>" class="table-title-link"><%= t.titulo %></a>
@@ -134,8 +134,8 @@
                   <span><%= t.instrutor %></span>
                 </div>
               </td>
-              <td><span class="table-date">[<%= formatarData(t.data) %>]</span></td>
-              <td><span class="workload-pill">[<%= pad2(t.cargaHoraria) %>h]</span></td>
+              <td><span class="table-date"><%= formatarData(t.data) %></span></td>
+              <td><span class="workload-pill"><%= t.cargaHoraria %>h</span></td>
               <td>
                 <span class="badge <%= statusObj.classe %>"><%= statusObj.rotulo %></span>
               </td>

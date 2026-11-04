@@ -4,6 +4,50 @@
    Cadastro (POST), Consulta (GET), Edição (PUT), Exclusão (DELETE) e Filtros
    ========================================================================== */
 
+/**
+ * Retorna a data local (fuso do navegador) no formato YYYY-MM-DD
+ * evitando que new Date().toISOString() avance para o dia seguinte após as 21h no Brasil.
+ */
+function obterDataLocalISO(data = new Date()) {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+/**
+ * Extrai a parte YYYY-MM-DD de uma data vinda da API (armazenada em UTC)
+ * de forma consistente com a gravação no MySQL.
+ */
+function formatarDataParaInput(valorData) {
+  if (!valorData) return "";
+  if (typeof valorData === "string") {
+    const match = valorData.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
+  const d = new Date(valorData);
+  if (Number.isNaN(d.getTime())) return "";
+  const ano = d.getUTCFullYear();
+  const mes = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dia = String(d.getUTCDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+/**
+ * Valida se uma string YYYY-MM-DD representa uma data real do calendário
+ */
+function dataCalendarioValida(textoData) {
+  if (!textoData || typeof textoData !== "string") return false;
+  const match = textoData.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+  const ano = Number(match[1]);
+  const mes = Number(match[2]);
+  const dia = Number(match[3]);
+  if (ano < 2000 || ano > 2100 || mes < 1 || mes > 12 || dia < 1 || dia > 31) return false;
+  const d = new Date(Date.UTC(ano, mes - 1, dia));
+  return d.getUTCFullYear() === ano && d.getUTCMonth() === mes - 1 && d.getUTCDate() === dia;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const modalTreinamento = document.getElementById("modalTreinamento");
   const formTreinamento = document.getElementById("formTreinamento");
@@ -24,7 +68,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const exclusaoNome = document.getElementById("exclusaoNomeTreinamento");
   const exclusaoId = document.getElementById("exclusaoTreinamentoId");
   const btnConfirmarExclusao = document.getElementById("btnConfirmarExclusao");
+
   let redirecionarAposExclusao = null;
+  let ultimoElementoFocado = null;
 
   function exibirErroFormulario(mensagem) {
     if (!formAlertaErro) return;
@@ -38,8 +84,9 @@ document.addEventListener("DOMContentLoaded", () => {
     formAlertaErro.classList.add("hidden");
   }
 
-  function abrirModalCriar() {
+  function abrirModalCriar(elementoGatilho = null) {
     if (!modalTreinamento || !formTreinamento) return;
+    ultimoElementoFocado = elementoGatilho || document.activeElement;
     formTreinamento.reset();
     limparErroFormulario();
     inputId.value = "";
@@ -47,9 +94,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modalTitulo.textContent = "Cadastrar Treinamento";
     btnSalvarTexto.textContent = "Cadastrar Treinamento";
 
-    // Define data padrão como hoje caso esteja vazio
+    // Define data padrão usando a data local do Brasil (YYYY-MM-DD)
     if (!inputData.value) {
-      inputData.value = new Date().toISOString().split("T")[0];
+      inputData.value = obterDataLocalISO();
     }
 
     modalTreinamento.classList.add("open");
@@ -57,8 +104,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => inputTitulo.focus(), 100);
   }
 
-  async function abrirModalEditar(id) {
+  async function abrirModalEditar(id, elementoGatilho = null) {
     if (!modalTreinamento || !formTreinamento) return;
+    ultimoElementoFocado = elementoGatilho || document.activeElement;
     limparErroFormulario();
 
     try {
@@ -77,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
       inputId.value = t.id;
       inputTitulo.value = t.titulo || "";
       inputInstrutor.value = t.instrutor || "";
-      inputData.value = t.data ? new Date(t.data).toISOString().split("T")[0] : "";
+      inputData.value = formatarDataParaInput(t.data);
       inputCargaHoraria.value = t.cargaHoraria || "";
       inputDescricao.value = t.descricao || "";
 
@@ -99,15 +147,21 @@ document.addEventListener("DOMContentLoaded", () => {
     modalTreinamento.classList.remove("open");
     modalTreinamento.setAttribute("aria-hidden", "true");
     limparErroFormulario();
+    if (ultimoElementoFocado && typeof ultimoElementoFocado.focus === "function") {
+      ultimoElementoFocado.focus();
+      ultimoElementoFocado = null;
+    }
   }
 
-  function abrirModalExcluir(id, titulo, redirectUrl = null) {
+  function abrirModalExcluir(id, titulo, redirectUrl = null, elementoGatilho = null) {
     if (!modalExclusao) return;
+    ultimoElementoFocado = elementoGatilho || document.activeElement;
     exclusaoId.value = id;
     exclusaoNome.textContent = `"${titulo}"`;
     redirecionarAposExclusao = redirectUrl;
     modalExclusao.classList.add("open");
     modalExclusao.setAttribute("aria-hidden", "false");
+    setTimeout(() => btnConfirmarExclusao && btnConfirmarExclusao.focus(), 100);
   }
 
   function fecharModalExclusao() {
@@ -116,13 +170,16 @@ document.addEventListener("DOMContentLoaded", () => {
     modalExclusao.setAttribute("aria-hidden", "true");
     exclusaoId.value = "";
     redirecionarAposExclusao = null;
+    if (ultimoElementoFocado && typeof ultimoElementoFocado.focus === "function") {
+      ultimoElementoFocado.focus();
+      ultimoElementoFocado = null;
+    }
   }
 
   // Delegação de eventos para botões de abrir/fechar modais
   document.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-action]");
     if (!btn) {
-      // Fechar modal clicando no backdrop escuro
       if (event.target === modalTreinamento) fecharModalTreinamento();
       if (event.target === modalExclusao) fecharModalExclusao();
       return;
@@ -131,17 +188,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const acao = btn.getAttribute("data-action");
 
     if (acao === "abrir-modal-criar") {
-      abrirModalCriar();
+      abrirModalCriar(btn);
     } else if (acao === "abrir-modal-editar") {
       const id = btn.getAttribute("data-id");
-      if (id) abrirModalEditar(id);
+      if (id) abrirModalEditar(id, btn);
     } else if (acao === "fechar-modal-treinamento") {
       fecharModalTreinamento();
     } else if (acao === "abrir-modal-excluir") {
       const id = btn.getAttribute("data-id");
       const titulo = btn.getAttribute("data-titulo") || "selecionado";
       const redirectUrl = btn.getAttribute("data-redirect");
-      if (id) abrirModalExcluir(id, titulo, redirectUrl);
+      if (id) abrirModalExcluir(id, titulo, redirectUrl, btn);
     } else if (acao === "fechar-modal-exclusao") {
       fecharModalExclusao();
     }
@@ -150,8 +207,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Fechar modais com a tecla ESC
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      fecharModalTreinamento();
-      fecharModalExclusao();
+      if (modalTreinamento && modalTreinamento.classList.contains("open")) {
+        fecharModalTreinamento();
+      }
+      if (modalExclusao && modalExclusao.classList.contains("open")) {
+        fecharModalExclusao();
+      }
     }
   });
 
@@ -162,33 +223,45 @@ document.addEventListener("DOMContentLoaded", () => {
       limparErroFormulario();
 
       const id = inputId.value.trim();
+      const cargaNumero = Number(inputCargaHoraria.value);
       const dados = {
         titulo: inputTitulo.value.trim(),
         instrutor: inputInstrutor.value.trim(),
         data: inputData.value,
-        cargaHoraria: Number(inputCargaHoraria.value),
+        cargaHoraria: cargaNumero,
         descricao: inputDescricao.value.trim(),
       };
 
-      // Validação rápida no cliente
-      if (!dados.titulo || dados.titulo.length < 3) {
-        exibirErroFormulario("Informe um título válido com pelo menos 3 caracteres.");
+      // Validação no cliente alinhada às regras do Controller
+      if (!dados.titulo || dados.titulo.length < 3 || dados.titulo.length > 150) {
+        exibirErroFormulario("O título deve ter entre 3 e 150 caracteres.");
         inputTitulo.focus();
         return;
       }
-      if (!dados.instrutor || dados.instrutor.length < 2) {
-        exibirErroFormulario("Informe o nome do(a) instrutor(a) responsável.");
+      if (!dados.instrutor || dados.instrutor.length < 2 || dados.instrutor.length > 120) {
+        exibirErroFormulario("O nome do(a) instrutor(a) deve ter entre 2 e 120 caracteres.");
         inputInstrutor.focus();
         return;
       }
-      if (!dados.data) {
-        exibirErroFormulario("Selecione a data de realização do treinamento.");
+      if (!dataCalendarioValida(dados.data)) {
+        exibirErroFormulario("Informe uma data de realização válida.");
         inputData.focus();
         return;
       }
-      if (!dados.cargaHoraria || dados.cargaHoraria <= 0) {
-        exibirErroFormulario("A carga horária deve ser um número maior que zero.");
+      if (
+        inputCargaHoraria.value === "" ||
+        Number.isNaN(cargaNumero) ||
+        !Number.isInteger(cargaNumero) ||
+        cargaNumero <= 0 ||
+        cargaNumero > 1000
+      ) {
+        exibirErroFormulario("A carga horária deve ser um número inteiro entre 1 e 1000 horas.");
         inputCargaHoraria.focus();
+        return;
+      }
+      if (dados.descricao.length > 2000) {
+        exibirErroFormulario("A descrição deve ter no máximo 2000 caracteres.");
+        inputDescricao.focus();
         return;
       }
 

@@ -1,5 +1,34 @@
 import prisma from "../config/prisma.js";
 
+/**
+ * Retorna o início do dia de hoje no calendário local (Brasil),
+ * representado como 00:00:00.000 UTC para comparar de forma exata
+ * com as datas salvas no formato YYYY-MM-DD (00:00:00.000 UTC).
+ */
+export function obterInicioDiaLocalEmUTC(dataRef = new Date()) {
+  return new Date(
+    Date.UTC(dataRef.getFullYear(), dataRef.getMonth(), dataRef.getDate(), 0, 0, 0, 0)
+  );
+}
+
+/**
+ * Converte uma string YYYY-MM-DD (ou ISO) em um objeto Date normalizado em 00:00:00.000 UTC
+ * sem sofrer deslocamento de fuso horário.
+ */
+export function normalizarDataCalendarioUTC(valorData) {
+  if (typeof valorData === "string") {
+    const match = valorData.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      const ano = Number(match[1]);
+      const mes = Number(match[2]);
+      const dia = Number(match[3]);
+      return new Date(Date.UTC(ano, mes - 1, dia, 0, 0, 0, 0));
+    }
+  }
+  const d = new Date(valorData);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+}
+
 class Treinamento {
   /**
    * Lista todos os treinamentos com suporte opcional a busca e filtro de status
@@ -18,8 +47,7 @@ class Treinamento {
       ];
     }
 
-    const hoje = new Date();
-    hoje.setUTCHours(0, 0, 0, 0);
+    const hoje = obterInicioDiaLocalEmUTC();
 
     if (status === "proximos") {
       where.data = { gte: hoje };
@@ -68,7 +96,7 @@ class Treinamento {
       data: {
         titulo: String(dados.titulo).trim(),
         instrutor: String(dados.instrutor).trim(),
-        data: new Date(dados.data),
+        data: normalizarDataCalendarioUTC(dados.data),
         cargaHoraria: Number(dados.cargaHoraria),
         descricao: descricaoLimpa,
       },
@@ -91,7 +119,7 @@ class Treinamento {
       data: {
         titulo: String(dados.titulo).trim(),
         instrutor: String(dados.instrutor).trim(),
-        data: new Date(dados.data),
+        data: normalizarDataCalendarioUTC(dados.data),
         cargaHoraria: Number(dados.cargaHoraria),
         descricao: descricaoLimpa,
       },
@@ -109,24 +137,50 @@ class Treinamento {
   }
 
   /**
-   * Obtém indicadores consolidados para o Dashboard
+   * Obtém indicadores consolidados e estatísticas reais para o Dashboard
    */
   static async obterIndicadores() {
     const todos = await prisma.treinamento.findMany({
       orderBy: { data: "asc" },
     });
 
-    const hoje = new Date();
-    hoje.setUTCHours(0, 0, 0, 0);
+    const hoje = obterInicioDiaLocalEmUTC();
 
     const totalTreinamentos = todos.length;
     const totalHoras = todos.reduce((acc, item) => acc + (item.cargaHoraria || 0), 0);
 
-    const proximosLista = todos.filter((item) => new Date(item.data) >= hoje);
+    const proximosLista = todos.filter(
+      (item) => normalizarDataCalendarioUTC(item.data).getTime() >= hoje.getTime()
+    );
 
     const realizadosLista = todos
-      .filter((item) => new Date(item.data) < hoje)
+      .filter((item) => normalizarDataCalendarioUTC(item.data).getTime() < hoje.getTime())
       .sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    // Agrupa instrutores reais a partir dos treinamentos cadastrados no banco
+    const mapaInstrutores = new Map();
+    for (const item of todos) {
+      const nomeInstrutor = item.instrutor.trim();
+      const estaAgendado = normalizarDataCalendarioUTC(item.data).getTime() >= hoje.getTime();
+
+      if (!mapaInstrutores.has(nomeInstrutor)) {
+        mapaInstrutores.set(nomeInstrutor, {
+          nome: nomeInstrutor,
+          totalTreinamentos: 0,
+          totalHoras: 0,
+          temAgendado: false,
+          ultimoTreinamentoId: item.id,
+        });
+      }
+
+      const reg = mapaInstrutores.get(nomeInstrutor);
+      reg.totalTreinamentos += 1;
+      reg.totalHoras += item.cargaHoraria || 0;
+      if (estaAgendado) reg.temAgendado = true;
+      reg.ultimoTreinamentoId = item.id;
+    }
+
+    const instrutoresReais = Array.from(mapaInstrutores.values());
 
     return {
       totalTreinamentos,
@@ -136,6 +190,7 @@ class Treinamento {
       proximosTreinamentos: proximosLista.slice(0, 5),
       ultimosRealizados: realizadosLista.slice(0, 5),
       todosTreinamentos: todos,
+      instrutoresReais,
     };
   }
 }

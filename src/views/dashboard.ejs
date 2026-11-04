@@ -2,12 +2,22 @@
 
 <%
   const pad2 = (n) => String(n ?? 0).padStart(2, '0');
-  const dataHojeFormatada = new Date().toLocaleDateString('pt-BR', {
-    day: 'numeric',
-    month: 'long'
-  });
 
-  // Paleta de cores pastéis dos avatares exatamente como na referência
+  // Cálculo dinâmico das proporções reais do gráfico circular (Donut Chart)
+  const total = indicadores.totalTreinamentos || 0;
+  const agendados = indicadores.proximosCount || 0;
+  const realizados = indicadores.realizadosCount || 0;
+
+  const pctAgendados = total > 0 ? Math.round((agendados / total) * 100) : 0;
+  const pctRealizados = total > 0 ? 100 - pctAgendados : 0;
+  const grausAgendados = total > 0 ? Math.round((agendados / total) * 360) : 0;
+
+  const estiloDonut =
+    total > 0
+      ? `background: conic-gradient(var(--mint) 0deg ${grausAgendados}deg, var(--lavender) ${grausAgendados}deg 360deg);`
+      : `background: var(--border-strong);`;
+
+  // Paleta de cores pastéis dos avatares
   const coresAvatares = [
     'avatar-lavender',
     'avatar-mint',
@@ -19,33 +29,7 @@
     'avatar-orange'
   ];
 
-  // Constrói lista de 8 pessoas combinando instrutores reais do banco + integrantes do time
-  const instrutoresBanco = (indicadores.todosTreinamentos || []).map((t) => ({
-    nome: t.instrutor.replace(/^(Prof\.ª?|Dra?\.|Eng\.|Psic\.)\s*/i, ''),
-    status: obterStatusTreinamento(t.data).classe === 'badge-upcoming' ? 'Em treinamento' : 'Presente',
-    treinamentoId: t.id
-  }));
-
-  const equipePadrao = [
-    { nome: 'Ana Clara', status: 'Presente' },
-    { nome: 'Lucas Mendes', status: 'Presente' },
-    { nome: 'Mariana Costa', status: 'Em treinamento' },
-    { nome: 'Rafael Souza', status: 'Ausente' },
-    { nome: 'Beatriz Lima', status: 'Presente' },
-    { nome: 'Gabriel Rocha', status: 'Presente' },
-    { nome: 'Camila Alves', status: 'Em treinamento' },
-    { nome: 'Thiago Nunes', status: 'Presente' }
-  ];
-
-  const listaPessoas = [];
-  const nomesVistos = new Set();
-
-  for (const p of [...instrutoresBanco, ...equipePadrao]) {
-    if (!nomesVistos.has(p.nome) && listaPessoas.length < 8) {
-      nomesVistos.add(p.nome);
-      listaPessoas.push(p);
-    }
-  }
+  const instrutoresReais = indicadores.instrutoresReais || [];
 %>
 
 <% if (erro) { %>
@@ -67,7 +51,7 @@
       type="text"
       name="busca"
       class="command-input"
-      placeholder="Pesquisar treinamento, consultar instrutor, agendar capacitação..."
+      placeholder="Pesquisar treinamento por título, instrutor ou conteúdo..."
       aria-label="Pesquisar ou agendar treinamento"
     />
     <div class="command-actions">
@@ -81,17 +65,17 @@
   </form>
 </section>
 
-<!-- Grid Principal de 3 Colunas (Pulso da Equipe | Hoje | Precisa de Atenção) -->
+<!-- Grid Principal de 3 Colunas (Pulso dos Treinamentos | Agenda de Treinamentos | Destaques) -->
 <section class="bento-grid-3" aria-label="Painel Principal">
-  <!-- Card 1: Pulso da equipe (Donut Chart + Proporções) -->
+  <!-- Card 1: Pulso dos Treinamentos (Donut Chart Dinâmico com Proporções Reais do Banco) -->
   <article class="bento-card">
-    <h2 class="bento-card-title">Pulso da equipe</h2>
+    <h2 class="bento-card-title">Pulso dos treinamentos</h2>
 
     <div class="donut-wrapper">
-      <div class="donut-chart">
+      <div class="donut-chart" style="<%= estiloDonut %>">
         <div class="donut-hole">
-          <strong class="donut-number">[<%= pad2(indicadores.totalTreinamentos) %>]</strong>
-          <span class="donut-unit">treinamentos</span>
+          <strong class="donut-number"><%= pad2(total) %></strong>
+          <span class="donut-unit"><%= total === 1 ? 'treinamento' : 'treinamentos' %></span>
         </div>
       </div>
     </div>
@@ -99,44 +83,44 @@
     <ul class="pulse-legend">
       <li class="pulse-legend-item">
         <div class="legend-left">
-          <span class="legend-dot dot-lavender"></span>
-          <span>Cadastrados (Total)</span>
+          <span class="legend-dot dot-mint"></span>
+          <span>Agendados (<%= pctAgendados %>%)</span>
         </div>
-        <strong class="legend-val">[<%= pad2(indicadores.totalTreinamentos) %>]</strong>
+        <strong class="legend-val"><%= pad2(agendados) %></strong>
       </li>
       <li class="pulse-legend-item">
         <div class="legend-left">
-          <span class="legend-dot dot-mint"></span>
-          <span>Em treinamento (Próximos)</span>
+          <span class="legend-dot dot-lavender"></span>
+          <span>Realizados (<%= pctRealizados %>%)</span>
         </div>
-        <strong class="legend-val">[<%= pad2(indicadores.proximosCount) %>]</strong>
+        <strong class="legend-val"><%= pad2(realizados) %></strong>
       </li>
       <li class="pulse-legend-item">
         <div class="legend-left">
           <span class="legend-dot dot-coral"></span>
-          <span>Realizados (Concluídos)</span>
+          <span>Carga horária total</span>
         </div>
-        <strong class="legend-val">[<%= pad2(indicadores.realizadosCount) %>]</strong>
+        <strong class="legend-val"><%= indicadores.totalHoras %>h</strong>
       </li>
     </ul>
 
     <p class="pulse-caption">
-      Carga horária total acumulada: <strong>[<%= pad2(indicadores.totalHoras) %>h]</strong>
+      Proporções calculadas em tempo real a partir do MySQL
     </p>
   </article>
 
-  <!-- Card 2: Hoje / Cronograma de Treinamentos -->
+  <!-- Card 2: Agenda de Treinamentos (Próximos Agendados com Data e Carga Horária Reais) -->
   <article class="bento-card">
     <div class="bento-card-header-inline">
-      <h2 class="bento-card-title">Hoje · <%= dataHojeFormatada %></h2>
+      <h2 class="bento-card-title">Agenda de treinamentos</h2>
       <button type="button" class="btn-inline-add" data-action="abrir-modal-criar">+ Agendar</button>
     </div>
 
-    <% if (indicadores.todosTreinamentos && indicadores.todosTreinamentos.length > 0) { %>
+    <% if (indicadores.proximosTreinamentos && indicadores.proximosTreinamentos.length > 0) { %>
       <ul class="timeline-list">
-        <% indicadores.todosTreinamentos.slice(0, 5).forEach((item) => { %>
+        <% indicadores.proximosTreinamentos.forEach((item) => { %>
           <li class="timeline-item">
-            <span class="timeline-time">[<%= String(item.cargaHoraria).padStart(2, '0') %>:00h]</span>
+            <span class="timeline-time"><%= formatarDataCurta(item.data) %> · <%= item.cargaHoraria %>h</span>
             <a href="/treinamentos/<%= item.id %>" class="timeline-title" title="Ver detalhes de <%= item.titulo %>">
               <%= item.titulo %>
             </a>
@@ -146,33 +130,33 @@
     <% } else { %>
       <div class="timeline-list">
         <div class="timeline-item">
-          <span class="timeline-time">[00:00]</span>
-          <span class="timeline-title text-muted">Nenhum treinamento cadastrado</span>
+          <span class="timeline-time">—</span>
+          <span class="timeline-title text-muted">Nenhum treinamento agendado para as próximas datas</span>
         </div>
       </div>
     <% } %>
 
     <div class="bento-card-footer-link">
-      <a href="/treinamentos">Ver agenda completa de treinamentos &rarr;</a>
+      <a href="/treinamentos?status=proximos">Ver todos os agendados &rarr;</a>
     </div>
   </article>
 
-  <!-- Card 3: Precisa de atenção -->
+  <!-- Card 3: Destaques do Cronograma (Baseado nos Registros Reais do Banco) -->
   <article class="bento-card">
-    <h2 class="bento-card-title">Precisa de atenção</h2>
+    <h2 class="bento-card-title">Resumo do cronograma</h2>
 
     <div class="attention-stack">
       <% if (indicadores.proximosTreinamentos && indicadores.proximosTreinamentos.length > 0) {
            const prox = indicadores.proximosTreinamentos[0];
       %>
         <a href="/treinamentos/<%= prox.id %>" class="attention-item">
-          <strong class="attention-item-title">Próximo treinamento agendado</strong>
-          <span class="attention-item-sub">[<%= prox.titulo %>] · [<%= formatarData(prox.data) %>]</span>
+          <strong class="attention-item-title">Próxima capacitação</strong>
+          <span class="attention-item-sub"><%= prox.titulo %> · <%= formatarData(prox.data) %></span>
         </a>
       <% } else { %>
         <div class="attention-item" data-action="abrir-modal-criar" style="cursor: pointer;">
           <strong class="attention-item-title">Sem treinamentos futuros</strong>
-          <span class="attention-item-sub">[Clique para agendar] · [Data pendente]</span>
+          <span class="attention-item-sub">Clique aqui para agendar um novo treinamento</span>
         </div>
       <% } %>
 
@@ -180,13 +164,13 @@
            const seg = indicadores.proximosTreinamentos[1];
       %>
         <a href="/treinamentos/<%= seg.id %>" class="attention-item">
-          <strong class="attention-item-title">Capacitação em preparação</strong>
-          <span class="attention-item-sub">[<%= seg.instrutor %>] · [<%= formatarData(seg.data) %>]</span>
+          <strong class="attention-item-title">Seguinte no calendário</strong>
+          <span class="attention-item-sub"><%= seg.instrutor %> · <%= formatarData(seg.data) %> (<%= seg.cargaHoraria %>h)</span>
         </a>
       <% } else { %>
         <a href="/treinamentos" class="attention-item">
-          <strong class="attention-item-title">Meta de horas corporativas</strong>
-          <span class="attention-item-sub">[<%= indicadores.totalHoras %>h acumuladas] · [<%= indicadores.totalTreinamentos %> turmas]</span>
+          <strong class="attention-item-title">Acumulado de capacitação</strong>
+          <span class="attention-item-sub"><%= indicadores.totalHoras %> horas em <%= indicadores.totalTreinamentos %> treinamento(s)</span>
         </a>
       <% } %>
 
@@ -194,46 +178,56 @@
            const ult = indicadores.ultimosRealizados[0];
       %>
         <a href="/treinamentos/<%= ult.id %>" class="attention-item">
-          <strong class="attention-item-title">Treinamento concluído</strong>
-          <span class="attention-item-sub">[<%= ult.titulo %>] · [<%= formatarData(ult.data) %>]</span>
+          <strong class="attention-item-title">Último treinamento realizado</strong>
+          <span class="attention-item-sub"><%= ult.titulo %> · <%= formatarData(ult.data) %></span>
         </a>
       <% } else { %>
-        <a href="/treinamentos" class="attention-item">
-          <strong class="attention-item-title">Treinamento sem presença</strong>
-          <span class="attention-item-sub">[Título] · [data]</span>
+        <a href="/treinamentos?status=realizados" class="attention-item">
+          <strong class="attention-item-title">Histórico de realizados</strong>
+          <span class="attention-item-sub">Nenhum treinamento concluído até o momento</span>
         </a>
       <% } %>
     </div>
   </article>
 </section>
 
-<!-- Card Largo: Pessoas (8 Avatares Pastéis Coloridos) -->
+<!-- Card Largo: Instrutores Cadastrados (100% Baseado nos Registros do Banco MySQL) -->
 <section id="secao-pessoas" class="bento-card people-section">
   <div class="bento-card-header-inline">
-    <h2 class="bento-card-title">Pessoas</h2>
-    <span class="bento-subtle-tag">Instrutores &amp; Participantes em Capacitação</span>
+    <div>
+      <h2 class="bento-card-title">Pessoas · Instrutores Responsáveis</h2>
+      <span class="bento-subtle-tag">Extraído automaticamente dos treinamentos cadastrados no MySQL</span>
+    </div>
+    <span class="badge badge-upcoming"><%= instrutoresReais.length %> instrutor(es)</span>
   </div>
 
-  <div class="people-grid">
-    <% listaPessoas.forEach((pessoa, idx) => { 
-         const inicial = pessoa.nome ? pessoa.nome.trim().charAt(0).toUpperCase() : 'N';
-         const classeCor = coresAvatares[idx % coresAvatares.length];
-    %>
-      <div class="person-item">
-        <% if (pessoa.treinamentoId) { %>
-          <a href="/treinamentos/<%= pessoa.treinamentoId %>" class="person-avatar <%= classeCor %>" title="Ver treinamento de <%= pessoa.nome %>">
+  <% if (instrutoresReais.length > 0) { %>
+    <div class="people-grid">
+      <% instrutoresReais.forEach((inst, idx) => {
+           const nomeSemTitulo = inst.nome.replace(/^(Prof\.ª?|Dra?\.|Eng\.|Psic\.)\s*/i, '');
+           const inicial = nomeSemTitulo ? nomeSemTitulo.trim().charAt(0).toUpperCase() : 'I';
+           const classeCor = coresAvatares[idx % coresAvatares.length];
+      %>
+        <div class="person-item">
+          <a
+            href="/treinamentos?busca=<%= encodeURIComponent(inst.nome) %>"
+            class="person-avatar <%= classeCor %>"
+            title="Filtrar treinamentos de <%= inst.nome %>"
+          >
             <%= inicial %>
           </a>
-        <% } else { %>
-          <div class="person-avatar <%= classeCor %>">
-            <%= inicial %>
-          </div>
-        <% } %>
-        <strong class="person-name"><%= pessoa.nome %></strong>
-        <span class="person-status"><%= pessoa.status %></span>
-      </div>
-    <% }) %>
-  </div>
+          <strong class="person-name" title="<%= inst.nome %>"><%= nomeSemTitulo %></strong>
+          <span class="person-status">
+            <%= inst.totalTreinamentos %> <%= inst.totalTreinamentos === 1 ? 'curso' : 'cursos' %> · <%= inst.totalHoras %>h
+          </span>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="empty-state">
+      <p>Cadastre um treinamento para visualizar os instrutores responsáveis aqui.</p>
+    </div>
+  <% } %>
 </section>
 
 <!-- Quadro Completo de Gestão de Treinamentos (CRUD Direto no Dashboard) -->
@@ -284,8 +278,8 @@
                   <span><%= t.instrutor %></span>
                 </div>
               </td>
-              <td><span class="table-date">[<%= formatarData(t.data) %>]</span></td>
-              <td><span class="workload-pill">[<%= pad2(t.cargaHoraria) %>h]</span></td>
+              <td><span class="table-date"><%= formatarData(t.data) %></span></td>
+              <td><span class="workload-pill"><%= t.cargaHoraria %>h</span></td>
               <td>
                 <span class="badge <%= statusObj.classe %>"><%= statusObj.rotulo %></span>
               </td>

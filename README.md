@@ -14,25 +14,28 @@ O **TalentFlow** é um sistema web corporativo desenvolvido para o setor de **Re
 
 ---
 
-## ✨ Funcionalidades Principais
+## ✨ Funcionalidades Implementadas
 
-1. **Dashboard Executivo (`/`)**
-   - Indicadores em tempo real: Quantidade de treinamentos cadastrados, Total de horas de treinamento, Treinamentos próximos (agendados) e Treinamentos realizados.
-   - Listas rápidas dos próximos treinamentos programados e do histórico recente.
-   - Quadro geral com atalhos para consulta, edição e exclusão.
+1. **Dashboard (`/`)**
+   - **Pulso dos treinamentos:** Gráfico circular (*Donut Chart*) calculado dinamicamente com as proporções reais entre treinamentos *Agendados* e *Realizados*, além da carga horária total acumulada.
+   - **Agenda de treinamentos:** Lista os próximos treinamentos agendados exibindo data (`DD/MM`), carga horária (`Xh`) e link direto para os detalhes.
+   - **Resumo do cronograma:** Destaca a próxima capacitação agendada, a seguinte no calendário e o último treinamento realizado.
+   - **Pessoas · Instrutores Responsáveis:** Exibe automaticamente os instrutores extraídos dos treinamentos cadastrados no MySQL, com quantidade de cursos e horas ministradas, permitindo filtrar os treinamentos de cada instrutor com um clique.
+   - **Quadro de Gestão:** Tabela integrada com atalhos para consultar, editar e excluir treinamentos.
 
 2. **Gestão de Treinamentos (`/treinamentos`)**
-   - Listagem completa dos treinamentos cadastrados.
+   - Listagem completa dos treinamentos salvos no banco de dados.
    - Pesquisa por título, instrutor ou descrição.
-   - Filtros por status (`Todos`, `Próximos/Agendados`, `Realizados/Concluídos`) e ordenação dinâmica (data, título A–Z, maior carga horária).
+   - Filtros por status (`Todos`, `Agendados`, `Realizados`) e ordenação (data mais próxima, data mais recente, título A–Z, maior carga horária).
 
 3. **Consulta de Detalhes (`/treinamentos/:id`)**
-   - Visualização detalhada de um treinamento específico, incluindo status, instrutor, data por extenso, carga horária, conteúdo programático e carimbos de criação/atualização.
+   - Visualização individual com título, status (`Hoje`, `Agendado` ou `Realizado`), instrutor, data por extenso, carga horária, descrição completa e carimbos de criação/atualização.
 
 4. **Cadastro, Edição e Exclusão (CRUD Completo)**
-   - Painel lateral (Slide-over Modal) para cadastrar novos treinamentos e editar registros existentes.
-   - Modal de confirmação segura antes de excluir qualquer registro.
-   - Notificações visuais (*Toast*) de sucesso e erro e validação de dados no cliente e no servidor.
+   - Painel lateral (*Modal*) para cadastrar novos treinamentos (`POST /api/treinamentos`) e editar registros existentes (`PUT /api/treinamentos/:id`).
+   - Modal de confirmação antes de excluir qualquer registro (`DELETE /api/treinamentos/:id`).
+   - Validação de dados consistente no cliente e no servidor (incluindo verificação de dias reais do calendário e tratamento de fuso horário local/UTC).
+   - Alternância entre **Tema Claro (padrão)** e **Tema Escuro (opcional)** com persistência no navegador.
 
 ---
 
@@ -42,11 +45,11 @@ O **TalentFlow** é um sistema web corporativo desenvolvido para o setor de **Re
 | :--- | :--- |
 | **Node.js (ES Modules)** | Ambiente de execução JavaScript utilizando `import` e `export`. |
 | **Express 5** | Servidor HTTP, roteamento de páginas e endpoints da API REST. |
-| **Prisma ORM 7.10.1** | Mapeamento objeto-relacional e comunicação segura com o banco de dados. |
+| **Prisma ORM 7.10.1** | Mapeamento objeto-relacional e comunicação com o banco de dados. |
 | **@prisma/adapter-mariadb** | Adaptador oficial do Prisma 7 para conexão com MySQL/MariaDB. |
 | **MySQL** | Sistema gerenciador de banco de dados relacional (`talentflow`). |
 | **EJS** | Template engine para renderização dinâmica das páginas HTML no servidor. |
-| **HTML5 / CSS3 / JS** | Estrutura semântica, identidade visual responsiva (Azul-marinho + Roxo) e interatividade. |
+| **HTML5 / CSS3 / JS** | Estrutura semântica, tema claro/escuro responsivo e integração via Fetch API. |
 
 ---
 
@@ -61,11 +64,11 @@ TalentFlow/
 │
 ├── src/
 │   ├── config/
-│   │   └── prisma.js                # Instância do PrismaClient com PrismaMariaDb adapter
+│   │   └── prisma.js                # Instância do PrismaClient (lê DATABASE_URL com fallback)
 │   ├── generated/
-│   │   └── prisma/                  # Cliente gerado pelo Prisma 7
+│   │   └── prisma/                  # Cliente gerado localmente via npx prisma generate
 │   ├── models/
-│   │   └── Treinamento.js           # Camada Model: consultas e operações via Prisma
+│   │   └── Treinamento.js           # Camada Model: consultas, filtros e indicadores no MySQL
 │   ├── controllers/
 │   │   ├── treinamentoController.js # Camada Controller (API JSON CRUD e validações)
 │   │   └── pageController.js        # Camada Controller (Renderização das views EJS)
@@ -74,31 +77,31 @@ TalentFlow/
 │   │   └── pageRoutes.js            # Rotas das páginas HTML (/, /treinamentos, /treinamentos/:id)
 │   ├── views/
 │   │   ├── partials/
-│   │   │   ├── header.ejs           # Cabeçalho, topbar e abertura de layout
-│   │   │   ├── sidebar.ejs          # Menu de navegação lateral
-│   │   │   └── footer.ejs           # Modais de CRUD, rodapé e scripts
-│   │   ├── dashboard.ejs            # Página inicial com KPIs e resumos
+│   │   │   ├── header.ejs           # Cabeçalho HTML, tema claro/escuro e abertura de layout
+│   │   │   ├── sidebar.ejs          # Barra de navegação superior em formato de pílula
+│   │   │   └── footer.ejs           # Modais de CRUD, rodapé e carregamento de scripts
+│   │   ├── dashboard.ejs            # Página inicial com gráfico proporcional, agenda e instrutores
 │   │   ├── treinamentos.ejs         # Página de listagem, busca e filtros
 │   │   └── treinamento-detalhe.ejs  # Página de detalhes de um treinamento
 │   └── public/
 │       ├── css/
-│       │   ├── main.css             # Variáveis, reset e estrutura principal
-│       │   ├── components.css       # Cards, tabelas, modais, botões e badges
-│       │   └── responsive.css       # Adaptação para mobile, tablet e desktop
+│       │   ├── main.css             # Variáveis de tema (claro/escuro), reset e navegação
+│       │   ├── components.css       # Cards, gráfico circular, tabelas, modais e botões
+│       │   └── responsive.css       # Adaptação para celular, tablet e desktop
 │       ├── js/
-│       │   ├── app.js               # Menu mobile e sistema de notificações Toast
-│       │   └── treinamentos.js      # Integração Fetch API (POST, PUT, DELETE, GET)
+│       │   ├── app.js               # Alternância de tema, aba ativa e notificações Toast
+│       │   └── treinamentos.js      # Integração Fetch API (POST, PUT, DELETE, GET) e validação
 │       └── images/
-│           └── logo.svg             # Ícone institucional do TalentFlow
+│           └── logo.svg             # Ícone vetorial do TalentFlow
 │
-├── .env                             # Variáveis de ambiente locais (não versionado)
-├── .env.example                     # Exemplo de configuração de variáveis de ambiente
+├── .env                             # Variáveis de ambiente locais (ignorado pelo Git)
+├── .env.example                     # Modelo de configuração de variáveis de ambiente
 ├── .gitignore                       # Arquivos ignorados pelo Git
 ├── package.json                     # Dependências e scripts npm
-├── prisma.config.ts                 # Configuração do Prisma 7
+├── prisma.config.ts                 # Configuração do Prisma 7 CLI
 ├── server.js                        # Configuração da aplicação Express, EJS e rotas
-├── index.js                         # Ponto de entrada que conecta ao MySQL e inicia o servidor
-└── README.md                        # Documentação completa do projeto
+├── index.js                         # Ponto de entrada que valida o MySQL e inicia o servidor
+└── README.md                        # Documentação do projeto
 ```
 
 ---
@@ -119,7 +122,7 @@ TalentFlow/
 
 | Método | Rota | Descrição |
 | :---: | :--- | :--- |
-| `GET` | `/` | Renderiza o **Dashboard** com indicadores e próximos treinamentos. |
+| `GET` | `/` | Renderiza o **Dashboard** com indicadores, agenda e instrutores. |
 | `GET` | `/treinamentos` | Renderiza a **Gestão de Treinamentos** com pesquisa e filtros. |
 | `GET` | `/treinamentos/:id` | Renderiza os **Detalhes do Treinamento** selecionado. |
 
@@ -128,7 +131,7 @@ TalentFlow/
 ## 🚀 Como Instalar e Executar o Projeto
 
 ### 1. Pré-requisitos
-- **Node.js** instalado (v20.19+ ou superior)
+- **Node.js** instalado
 - **MySQL Server** em execução
 
 ### 2. Instalar dependências
@@ -150,6 +153,7 @@ PORT=3000
 ```
 
 ### 4. Executar as migrações e gerar o Prisma Client
+Como a pasta `src/generated/prisma/` é ignorada pelo Git, gere o cliente localmente:
 ```bash
 npx prisma migrate dev
 npx prisma generate
@@ -164,20 +168,3 @@ npm start
 npm run dev
 ```
 Acesse no navegador: **`http://localhost:3000`**
-
----
-
-## 🎤 Roteiro de Apresentação ao Professor
-
-1. **Contextualização (1 min):**
-   - Apresentar o **TalentFlow** como uma solução focada em RH para controle centralizado de capacitações corporativas (Dashboard + Catálogo + CRUD).
-2. **Arquitetura MVC e Fluxo dos Dados (2 min):**
-   - Mostrar a separação clara na pasta `src/`:
-     - **Routes (`treinamentoRoutes.js` / `pageRoutes.js`):** recebem a requisição HTTP.
-     - **Controllers (`treinamentoController.js` / `pageController.js`):** validam os campos obrigatórios (`titulo`, `instrutor`, `data`, `cargaHoraria`) e coordenam a resposta em **JSON** ou **HTML (EJS)**.
-     - **Model (`Treinamento.js`) + Prisma (`config/prisma.js`):** executam as queries no **MySQL** (`findMany`, `findUnique`, `create`, `update`, `delete`).
-3. **Demonstração Prática do CRUD (2 min):**
-   - Abrir o **Dashboard (`/`)** e mostrar os 4 indicadores calculados dinamicamente.
-   - Clicar em **Novo Treinamento**, preencher o formulário e demonstrar o `POST /api/treinamentos` salvando no MySQL e atualizando os indicadores.
-   - Ir em **Treinamentos (`/treinamentos`)**, pesquisar pelo título e filtrar entre *Agendados* e *Realizados*.
-   - Abrir os **Detalhes (`/treinamentos/:id`)**, clicar em **Editar** (`PUT /api/treinamentos/:id`) e depois demonstrar a **Exclusão com confirmação** (`DELETE /api/treinamentos/:id`).

@@ -423,8 +423,8 @@ html[data-theme="dark"] .command-btn-go:hover {
 
 .people-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 20px;
   text-align: center;
 }
 
@@ -919,6 +919,8 @@ html[data-theme="dark"] .btn-primary:hover:not(:disabled) {
   width: 100%;
   max-width: 500px;
   height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background-color: var(--bg-modal);
   border-left: 1px solid var(--border-card);
   box-shadow: var(--shadow-card);

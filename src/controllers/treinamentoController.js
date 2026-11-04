@@ -1,6 +1,37 @@
 import Treinamento from "../models/Treinamento.js";
 
 /**
+ * Valida se uma string de data está no formato YYYY-MM-DD (ou ISO válido)
+ * e representa um dia real do calendário (rejeitando datas inexistentes como 2026-02-30).
+ */
+function validarDataRealCalendario(valorData) {
+  if (!valorData || typeof valorData !== "string") {
+    return false;
+  }
+
+  const texto = valorData.trim();
+  const match = texto.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
+  if (!match) {
+    return false;
+  }
+
+  const ano = Number(match[1]);
+  const mes = Number(match[2]);
+  const dia = Number(match[3]);
+
+  if (ano < 2000 || ano > 2100 || mes < 1 || mes > 12 || dia < 1 || dia > 31) {
+    return false;
+  }
+
+  const dataUTC = new Date(Date.UTC(ano, mes - 1, dia));
+  return (
+    dataUTC.getUTCFullYear() === ano &&
+    dataUTC.getUTCMonth() === mes - 1 &&
+    dataUTC.getUTCDate() === dia
+  );
+}
+
+/**
  * Valida os dados de entrada de um treinamento
  */
 function validarDadosTreinamento(dados) {
@@ -24,11 +55,8 @@ function validarDadosTreinamento(dados) {
 
   if (!dados.data) {
     erros.push("A data do treinamento é obrigatória.");
-  } else {
-    const dataConvertida = new Date(dados.data);
-    if (Number.isNaN(dataConvertida.getTime())) {
-      erros.push("A data informada é inválida.");
-    }
+  } else if (!validarDataRealCalendario(String(dados.data))) {
+    erros.push("A data informada é inválida. Utilize o formato AAAA-MM-DD com um dia válido.");
   }
 
   const carga = Number(dados.cargaHoraria);

@@ -17,6 +17,16 @@ async function iniciarServidor() {
       console.log(`📚 Gestão de Treinamentos: http://localhost:${PORT}/treinamentos`);
       console.log(`🔌 API CRUD: http://localhost:${PORT}/api/treinamentos`);
     });
+
+    servidorHttp.on("error", async (erro) => {
+      if (erro.code === "EADDRINUSE") {
+        console.error(`❌ A porta ${PORT} já está em uso por outro processo.`);
+      } else {
+        console.error("❌ Erro no servidor HTTP:", erro.message);
+      }
+      await prisma.$disconnect().catch(() => {});
+      process.exit(1);
+    });
   } catch (error) {
     console.error("❌ Falha ao iniciar o servidor TalentFlow:", error.message);
     await prisma.$disconnect().catch(() => {});

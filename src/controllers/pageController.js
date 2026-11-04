@@ -28,6 +28,7 @@ class PageController {
           proximosTreinamentos: [],
           ultimosRealizados: [],
           todosTreinamentos: [],
+          instrutoresReais: [],
         },
         erro: "Não foi possível carregar os indicadores do banco de dados.",
       });
@@ -76,6 +77,7 @@ class PageController {
           totalHoras: 0,
           proximosCount: 0,
           realizadosCount: 0,
+          instrutoresReais: [],
         },
         filtros: { busca: "", status: "todos", ordenar: "data_asc" },
         erro: "Erro ao carregar a lista de treinamentos.",
