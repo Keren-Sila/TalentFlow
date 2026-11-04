@@ -1,31 +1,20 @@
 /* ==========================================================================
    TalentFlow — responsive.css
-   Media Queries para Notebooks, Tablets e Smartphones
+   Adaptação Responsiva para Tablets e Smartphones
    ========================================================================== */
 
-.sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(15, 23, 42, 0.5);
-  z-index: 90;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition);
-}
-
-.sidebar-overlay.active {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Telas até 1180px (Notebooks menores e Tablets Landscape) */
-@media (max-width: 1180px) {
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 1040px) {
+  .bento-grid-3 {
+    grid-template-columns: 1fr;
   }
 
-  .dashboard-columns {
-    grid-template-columns: 1fr;
+  .people-grid {
+    grid-template-columns: repeat(4, 1fr);
+    row-gap: 24px;
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .detail-meta-grid {
@@ -33,98 +22,53 @@
   }
 }
 
-/* Telas até 920px (Tablets e Dispositivos Móveis) */
-@media (max-width: 920px) {
-  .sidebar {
-    transform: translateX(-100%);
+@media (max-width: 780px) {
+  .pill-navbar {
+    flex-wrap: wrap;
+    border-radius: 22px;
+    padding: 14px 18px;
+    justify-content: center;
   }
 
-  .sidebar.open {
-    transform: translateX(0);
+  .pill-nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    overflow-x: auto;
+    padding-top: 6px;
   }
 
-  .sidebar-close-btn {
-    display: inline-flex;
-  }
-
-  .main-wrapper {
-    margin-left: 0;
-  }
-
-  .mobile-menu-btn {
-    display: inline-flex;
-  }
-
-  .topbar {
-    padding: 0 18px;
-  }
-
-  .user-profile-pill {
-    display: none;
-  }
-
-  .main-content {
-    padding: 20px 18px;
-  }
-
-  .summary-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .hero-banner {
+  .command-bar {
     flex-direction: column;
-    align-items: flex-start;
-    padding: 24px;
+    align-items: stretch;
+    padding: 14px;
   }
 
-  .hero-banner-illustration {
+  .command-actions {
     width: 100%;
-  }
-
-  .hero-stat-floating {
-    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
 }
 
-/* Telas até 600px (Smartphones) */
-@media (max-width: 600px) {
-  .kpi-grid,
+@media (max-width: 560px) {
+  .app-shell {
+    padding: 18px 14px 32px;
+  }
+
+  .people-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .summary-strip,
   .form-row {
     grid-template-columns: 1fr;
   }
 
-  .topbar-title {
-    font-size: 1.08rem;
-  }
-
-  .topbar-right .btn span {
-    display: none;
-  }
-
-  .card-header {
+  .footer-content,
+  .detail-footer-timestamps {
     flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .filter-controls,
-  .filter-select-group,
-  .filter-select {
-    width: 100%;
-  }
-
-  .detail-main-card {
-    padding: 20px;
-  }
-
-  .detail-footer-timestamps,
-  .footer-content {
-    flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     text-align: center;
-  }
-
-  .modal-panel {
-    max-width: 100%;
   }
 }

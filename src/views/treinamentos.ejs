@@ -1,99 +1,103 @@
 <%- include('partials/header') %>
 
+<%
+  const pad2 = (n) => String(n ?? 0).padStart(2, '0');
+  const coresAvatares = [
+    'avatar-lavender',
+    'avatar-mint',
+    'avatar-coral',
+    'avatar-yellow',
+    'avatar-blue',
+    'avatar-lilac',
+    'avatar-green',
+    'avatar-orange'
+  ];
+%>
+
 <% if (erro) { %>
   <div class="alert alert-error">
     <strong>Atenção:</strong> <%= erro %>
   </div>
 <% } %>
 
-<!-- Mini Resumo na Página de Listagem -->
-<section class="summary-strip">
-  <div class="summary-pill">
-    <span class="summary-pill-label">Total</span>
-    <strong class="summary-pill-value"><%= indicadores.totalTreinamentos %></strong>
-  </div>
-  <div class="summary-pill">
-    <span class="summary-pill-label">Carga Horária Total</span>
-    <strong class="summary-pill-value"><%= indicadores.totalHoras %>h</strong>
-  </div>
-  <div class="summary-pill">
-    <span class="summary-pill-label">Próximos</span>
-    <strong class="summary-pill-value text-purple"><%= indicadores.proximosCount %></strong>
-  </div>
-  <div class="summary-pill">
-    <span class="summary-pill-label">Realizados</span>
-    <strong class="summary-pill-value text-emerald"><%= indicadores.realizadosCount %></strong>
-  </div>
-</section>
+<!-- Cabeçalho da Página de Treinamentos -->
+<section class="hero-greeting hero-compact">
+  <h1 class="hero-main-title">
+    <span class="greeting-white">Treinamentos.</span>
+    <span class="greeting-gradient">Capacitação e agenda do time</span>
+  </h1>
 
-<!-- Barra de Pesquisa e Filtros -->
-<section class="card filter-bar-card">
-  <form id="formFiltros" action="/treinamentos" method="GET" class="filter-form">
-    <div class="search-input-wrapper">
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input
-        type="search"
-        id="inputBusca"
-        name="busca"
-        value="<%= filtros.busca %>"
-        class="form-control search-input"
-        placeholder="Pesquisar por título, instrutor ou descrição..."
-        aria-label="Pesquisar treinamentos"
-      />
-    </div>
+  <!-- Barra de Pesquisa e Filtros no Estilo Command Bar -->
+  <form id="formFiltros" action="/treinamentos" method="GET" class="command-bar command-bar-filters">
+    <input
+      type="search"
+      id="inputBusca"
+      name="busca"
+      value="<%= filtros.busca %>"
+      class="command-input"
+      placeholder="Pesquisar por título, instrutor ou conteúdo..."
+      aria-label="Pesquisar treinamentos"
+    />
 
-    <div class="filter-controls">
-      <div class="filter-select-group">
-        <label for="selectStatus" class="sr-only">Status</label>
-        <select id="selectStatus" name="status" class="form-control filter-select">
-          <option value="todos" <%= filtros.status === 'todos' ? 'selected' : '' %>>Status: Todos</option>
-          <option value="proximos" <%= filtros.status === 'proximos' ? 'selected' : '' %>>Apenas Próximos (Agendados)</option>
-          <option value="realizados" <%= filtros.status === 'realizados' ? 'selected' : '' %>>Apenas Realizados (Concluídos)</option>
-        </select>
-      </div>
+    <div class="command-actions">
+      <select id="selectStatus" name="status" class="command-select" aria-label="Filtrar por status">
+        <option value="todos" <%= filtros.status === 'todos' ? 'selected' : '' %>>Status: Todos</option>
+        <option value="proximos" <%= filtros.status === 'proximos' ? 'selected' : '' %>>Em treinamento (Próximos)</option>
+        <option value="realizados" <%= filtros.status === 'realizados' ? 'selected' : '' %>>Realizados (Concluídos)</option>
+      </select>
 
-      <div class="filter-select-group">
-        <label for="selectOrdenar" class="sr-only">Ordenar por</label>
-        <select id="selectOrdenar" name="ordenar" class="form-control filter-select">
-          <option value="data_asc" <%= filtros.ordenar === 'data_asc' ? 'selected' : '' %>>Ordenar: Data (Mais próximos)</option>
-          <option value="data_desc" <%= filtros.ordenar === 'data_desc' ? 'selected' : '' %>>Ordenar: Data (Mais recentes)</option>
-          <option value="titulo_asc" <%= filtros.ordenar === 'titulo_asc' ? 'selected' : '' %>>Ordenar: Título (A - Z)</option>
-          <option value="carga_desc" <%= filtros.ordenar === 'carga_desc' ? 'selected' : '' %>>Ordenar: Maior Carga Horária</option>
-        </select>
-      </div>
-
-      <button type="submit" class="btn btn-secondary">
-        Filtrar
-      </button>
+      <select id="selectOrdenar" name="ordenar" class="command-select" aria-label="Ordenar por">
+        <option value="data_asc" <%= filtros.ordenar === 'data_asc' ? 'selected' : '' %>>Data (Próximos)</option>
+        <option value="data_desc" <%= filtros.ordenar === 'data_desc' ? 'selected' : '' %>>Data (Recentes)</option>
+        <option value="titulo_asc" <%= filtros.ordenar === 'titulo_asc' ? 'selected' : '' %>>Título (A-Z)</option>
+        <option value="carga_desc" <%= filtros.ordenar === 'carga_desc' ? 'selected' : '' %>>Maior Carga</option>
+      </select>
 
       <% if (filtros.busca || (filtros.status && filtros.status !== 'todos') || (filtros.ordenar && filtros.ordenar !== 'data_asc')) { %>
-        <a href="/treinamentos" class="btn btn-ghost" title="Limpar filtros">
-          Limpar
-        </a>
+        <a href="/treinamentos" class="command-btn-ghost" title="Limpar filtros">Limpar</a>
       <% } %>
+
+      <button type="submit" class="command-btn-go">Ir</button>
     </div>
   </form>
 </section>
 
+<!-- Faixa de Indicadores Rápidos -->
+<section class="summary-strip">
+  <div class="bento-mini-card">
+    <span class="legend-dot dot-lavender"></span>
+    <span class="summary-pill-label">Cadastrados</span>
+    <strong class="summary-pill-value">[<%= pad2(indicadores.totalTreinamentos) %>]</strong>
+  </div>
+  <div class="bento-mini-card">
+    <span class="legend-dot dot-mint"></span>
+    <span class="summary-pill-label">Em treinamento</span>
+    <strong class="summary-pill-value text-mint">[<%= pad2(indicadores.proximosCount) %>]</strong>
+  </div>
+  <div class="bento-mini-card">
+    <span class="legend-dot dot-coral"></span>
+    <span class="summary-pill-label">Realizados</span>
+    <strong class="summary-pill-value text-coral">[<%= pad2(indicadores.realizadosCount) %>]</strong>
+  </div>
+  <div class="bento-mini-card">
+    <span class="legend-dot dot-yellow"></span>
+    <span class="summary-pill-label">Total de Horas</span>
+    <strong class="summary-pill-value">[<%= pad2(indicadores.totalHoras) %>h]</strong>
+  </div>
+</section>
+
 <!-- Tabela Principal de Treinamentos -->
-<section class="card">
-  <div class="card-header">
+<section class="bento-card crud-section">
+  <div class="crud-section-header">
     <div>
-      <h2 class="card-title">Catálogo de Treinamentos</h2>
-      <p class="card-subtitle">
-        Exibindo <strong id="contadorRegistros"><%= treinamentos.length %></strong>
-        <%= treinamentos.length === 1 ? 'treinamento encontrado' : 'treinamentos encontrados' %>
+      <h2 class="bento-card-title" style="margin-bottom: 4px;">Catálogo de Treinamentos</h2>
+      <p class="bento-subtle-tag">
+        Exibindo <strong id="contadorRegistros">[<%= pad2(treinamentos.length) %>]</strong>
+        <%= treinamentos.length === 1 ? 'registro encontrado' : 'registros encontrados' %>
       </p>
     </div>
     <button type="button" class="btn btn-primary" data-action="abrir-modal-criar">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-      <span>Cadastrar Treinamento</span>
+      + Cadastrar Treinamento
     </button>
   </div>
 
@@ -103,7 +107,7 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>Título &amp; Descrição</th>
+            <th>Treinamento</th>
             <th>Instrutor(a)</th>
             <th>Data</th>
             <th>Carga Horária</th>
@@ -112,16 +116,12 @@
           </tr>
         </thead>
         <tbody>
-          <% treinamentos.forEach((t) => {
+          <% treinamentos.forEach((t, idx) => {
                const statusObj = obterStatusTreinamento(t.data);
+               const corAvatar = coresAvatares[idx % coresAvatares.length];
           %>
-            <tr
-              class="training-row"
-              data-titulo="<%= t.titulo.toLowerCase() %>"
-              data-instrutor="<%= t.instrutor.toLowerCase() %>"
-              data-status="<%= statusObj.classe === 'badge-upcoming' ? 'proximos' : 'realizados' %>"
-            >
-              <td><span class="id-badge">#<%= t.id %></span></td>
+            <tr class="training-row">
+              <td><span class="id-badge">[#<%= pad2(t.id) %>]</span></td>
               <td>
                 <div class="table-primary-cell">
                   <a href="/treinamentos/<%= t.id %>" class="table-title-link"><%= t.titulo %></a>
@@ -130,12 +130,12 @@
               </td>
               <td>
                 <div class="instructor-cell">
-                  <span class="instructor-avatar"><%= t.instrutor.charAt(0).toUpperCase() %></span>
+                  <span class="instructor-avatar <%= corAvatar %>"><%= t.instrutor.charAt(0).toUpperCase() %></span>
                   <span><%= t.instrutor %></span>
                 </div>
               </td>
-              <td><span class="table-date"><%= formatarData(t.data) %></span></td>
-              <td><span class="workload-pill"><%= t.cargaHoraria %>h</span></td>
+              <td><span class="table-date">[<%= formatarData(t.data) %>]</span></td>
+              <td><span class="workload-pill">[<%= pad2(t.cargaHoraria) %>h]</span></td>
               <td>
                 <span class="badge <%= statusObj.classe %>"><%= statusObj.rotulo %></span>
               </td>
@@ -181,14 +181,8 @@
     </div>
   <% } else { %>
     <div class="empty-state">
-      <div class="empty-state-icon">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-      </div>
       <h4>Nenhum treinamento encontrado</h4>
-      <p>Não encontramos treinamentos com os critérios informados. Tente limpar os filtros ou cadastre um novo treinamento.</p>
+      <p>Não encontramos treinamentos com os critérios informados. Limpe os filtros ou cadastre um novo treinamento.</p>
       <div class="empty-state-actions">
         <a href="/treinamentos" class="btn btn-secondary">Limpar Filtros</a>
         <button type="button" class="btn btn-primary" data-action="abrir-modal-criar">

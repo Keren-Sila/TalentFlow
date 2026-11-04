@@ -1,85 +1,32 @@
-<aside id="sidebar" class="sidebar">
-  <div class="sidebar-header">
-    <a href="/" class="brand-logo">
-      <div class="brand-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <span class="brand-name">TalentFlow</span>
-        <span class="brand-subtitle">Training &amp; HR System</span>
-      </div>
-    </a>
-    <button type="button" id="btnCloseSidebar" class="btn-icon sidebar-close-btn" aria-label="Fechar menu">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
-  </div>
-
-  <div class="sidebar-section-label">MENU PRINCIPAL</div>
-
-  <nav class="sidebar-nav">
-    <a href="/" class="nav-item <%= paginaAtiva === 'dashboard' ? 'active' : '' %>">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="7" height="9" rx="1"></rect>
-        <rect x="14" y="3" width="7" height="5" rx="1"></rect>
-        <rect x="14" y="12" width="7" height="9" rx="1"></rect>
-        <rect x="3" y="16" width="7" height="5" rx="1"></rect>
-      </svg>
-      <span>Dashboard</span>
+<!-- Barra de Navegação Flutuante em Pílula (Estilo RH Organizado / TalentFlow) -->
+<header class="top-pill-wrapper">
+  <nav class="pill-navbar" aria-label="Navegação Principal">
+    <a href="/" class="pill-brand">
+      RH Organizado <span class="pill-brand-tag">TalentFlow</span>
     </a>
 
-    <a href="/treinamentos" class="nav-item <%= paginaAtiva === 'treinamentos' ? 'active' : '' %>">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-      </svg>
-      <span>Treinamentos</span>
-    </a>
-  </nav>
-
-  <div class="sidebar-section-label">AÇÕES RÁPIDAS</div>
-
-  <div class="sidebar-quick-actions">
-    <button type="button" class="sidebar-cta-btn" data-action="abrir-modal-criar">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="16"></line>
-        <line x1="8" y1="12" x2="16" y2="12"></line>
-      </svg>
-      <span>Cadastrar Treinamento</span>
-    </button>
-
-    <a href="/treinamentos?status=proximos" class="nav-item nav-subitem">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="16" y1="2" x2="16" y2="6"></line>
-        <line x1="8" y1="2" x2="8" y2="6"></line>
-        <line x1="3" y1="10" x2="21" y2="10"></line>
-      </svg>
-      <span>Próximos Agendados</span>
-    </a>
-
-    <a href="/treinamentos?status=realizados" class="nav-item nav-subitem">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-      </svg>
-      <span>Histórico Realizados</span>
-    </a>
-  </div>
-
-  <div class="sidebar-footer">
-    <div class="sidebar-footer-card">
-      <div class="status-dot-wrapper">
-        <span class="status-dot"></span>
-        <span class="status-text">Sistema Online • MySQL</span>
-      </div>
-      <p class="sidebar-footer-copy">Projeto Final Senac • MVC + Prisma</p>
+    <div class="pill-nav-links" id="sidebar">
+      <a href="/" class="pill-link <%= paginaAtiva === 'dashboard' ? 'active' : '' %>">
+        Início
+      </a>
+      <a href="/#secao-pessoas" class="pill-link">
+        Pessoas
+      </a>
+      <a href="/treinamentos?status=realizados" class="pill-link">
+        Realizados
+      </a>
+      <a href="/treinamentos" class="pill-link <%= paginaAtiva === 'treinamentos' ? 'active' : '' %>">
+        Treinamentos
+      </a>
+      <a href="/treinamentos?status=proximos" class="pill-link">
+        Agendados
+      </a>
     </div>
-  </div>
-</aside>
+
+    <div class="pill-nav-actions">
+      <button type="button" class="pill-cta-btn" data-action="abrir-modal-criar">
+        + Agendar
+      </button>
+    </div>
+  </nav>
+</header>
