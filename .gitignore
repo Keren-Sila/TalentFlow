@@ -2,6 +2,10 @@ node_modules/
 .env
 src/generated/prisma/
 /generated/prisma
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
 .DS_Store
 Thumbs.db
 *.log
