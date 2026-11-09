@@ -4,8 +4,16 @@ import {
   obterInicioDiaLocalEmUTC,
 } from "../utils/formatadores.js";
 
+const ORDENACAO_PADRAO = {
+  data_asc: { data: "asc" },
+  data_desc: { data: "desc" },
+  titulo_asc: { titulo: "asc" },
+  carga_desc: { cargaHoraria: "desc" },
+  recentes: { createdAt: "desc" },
+};
+
 function prepararDadosParaBanco(dados) {
-  const descricaoLimpa =
+  const descricao =
     typeof dados.descricao === "string" && dados.descricao.trim() !== ""
       ? dados.descricao.trim()
       : null;
@@ -15,7 +23,7 @@ function prepararDadosParaBanco(dados) {
     instrutor: String(dados.instrutor).trim(),
     data: normalizarDataCalendarioUTC(dados.data),
     cargaHoraria: Number(dados.cargaHoraria),
-    descricao: descricaoLimpa,
+    descricao,
   };
 }
 
@@ -24,7 +32,7 @@ class Treinamento {
     const { busca, status, ordenar } = filtros;
     const where = {};
 
-    if (busca && typeof busca === "string" && busca.trim() !== "") {
+    if (typeof busca === "string" && busca.trim() !== "") {
       const termo = busca.trim();
       where.OR = [
         { titulo: { contains: termo } },
@@ -34,36 +42,21 @@ class Treinamento {
     }
 
     const hoje = obterInicioDiaLocalEmUTC();
-    if (status === "proximos") {
-      where.data = { gte: hoje };
-    } else if (status === "realizados") {
-      where.data = { lt: hoje };
-    }
-
-    const opcoesOrdenacao = {
-      data_asc: { data: "asc" },
-      data_desc: { data: "desc" },
-      titulo_asc: { titulo: "asc" },
-      carga_desc: { cargaHoraria: "desc" },
-      recentes: { createdAt: "desc" },
-    };
+    if (status === "proximos") where.data = { gte: hoje };
+    if (status === "realizados") where.data = { lt: hoje };
 
     return prisma.treinamento.findMany({
       where,
-      orderBy: opcoesOrdenacao[ordenar] || { data: "asc" },
+      orderBy: ORDENACAO_PADRAO[ordenar] || ORDENACAO_PADRAO.data_asc,
     });
   }
 
   static buscarPorId(id) {
-    return prisma.treinamento.findUnique({
-      where: { id: Number(id) },
-    });
+    return prisma.treinamento.findUnique({ where: { id: Number(id) } });
   }
 
   static criar(dados) {
-    return prisma.treinamento.create({
-      data: prepararDadosParaBanco(dados),
-    });
+    return prisma.treinamento.create({ data: prepararDadosParaBanco(dados) });
   }
 
   static atualizar(id, dados) {
@@ -74,52 +67,49 @@ class Treinamento {
   }
 
   static excluir(id) {
-    return prisma.treinamento.delete({
-      where: { id: Number(id) },
-    });
+    return prisma.treinamento.delete({ where: { id: Number(id) } });
   }
 
   static async obterIndicadores() {
-    const todos = await prisma.treinamento.findMany({
-      orderBy: { data: "asc" },
-    });
+    const todos = await prisma.treinamento.findMany({ orderBy: { data: "asc" } });
+    const hoje = obterInicioDiaLocalEmUTC().getTime();
 
-    const hoje = obterInicioDiaLocalEmUTC();
-    const totalTreinamentos = todos.length;
-    const totalHoras = todos.reduce((acc, item) => acc + (item.cargaHoraria || 0), 0);
-
-    const proximosLista = todos.filter(
-      (item) => normalizarDataCalendarioUTC(item.data).getTime() >= hoje.getTime()
-    );
-
-    const realizadosLista = todos
-      .filter((item) => normalizarDataCalendarioUTC(item.data).getTime() < hoje.getTime())
-      .sort((a, b) => new Date(b.data) - new Date(a.data));
-
+    const proximosLista = [];
+    const realizadosLista = [];
     const mapaInstrutores = new Map();
-    for (const item of todos) {
-      const nomeInstrutor = item.instrutor.trim();
-      const estaAgendado = normalizarDataCalendarioUTC(item.data).getTime() >= hoje.getTime();
+    let totalHoras = 0;
 
-      if (!mapaInstrutores.has(nomeInstrutor)) {
-        mapaInstrutores.set(nomeInstrutor, {
-          nome: nomeInstrutor,
-          totalTreinamentos: 0,
-          totalHoras: 0,
-          temAgendado: false,
-          ultimoTreinamentoId: item.id,
-        });
+    for (const item of todos) {
+      const carga = item.cargaHoraria || 0;
+      const agendado = normalizarDataCalendarioUTC(item.data).getTime() >= hoje;
+      totalHoras += carga;
+
+      if (agendado) {
+        proximosLista.push(item);
+      } else {
+        realizadosLista.push(item);
       }
 
-      const reg = mapaInstrutores.get(nomeInstrutor);
-      reg.totalTreinamentos += 1;
-      reg.totalHoras += item.cargaHoraria || 0;
-      if (estaAgendado) reg.temAgendado = true;
-      reg.ultimoTreinamentoId = item.id;
+      const nome = item.instrutor.trim();
+      const atual = mapaInstrutores.get(nome) || {
+        nome,
+        totalTreinamentos: 0,
+        totalHoras: 0,
+        temAgendado: false,
+        ultimoTreinamentoId: item.id,
+      };
+
+      atual.totalTreinamentos += 1;
+      atual.totalHoras += carga;
+      atual.temAgendado = atual.temAgendado || agendado;
+      atual.ultimoTreinamentoId = item.id;
+      mapaInstrutores.set(nome, atual);
     }
 
+    realizadosLista.sort((a, b) => new Date(b.data) - new Date(a.data));
+
     return {
-      totalTreinamentos,
+      totalTreinamentos: todos.length,
       totalHoras,
       proximosCount: proximosLista.length,
       realizadosCount: realizadosLista.length,

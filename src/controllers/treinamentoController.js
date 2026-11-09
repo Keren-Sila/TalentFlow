@@ -1,10 +1,5 @@
 import Treinamento from "../models/Treinamento.js";
 
-function validarId(paramId) {
-  const id = Number(paramId);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
-
 function validarDataCalendario(valorData) {
   if (!valorData || typeof valorData !== "string") return false;
 
@@ -53,6 +48,29 @@ function validarDadosTreinamento(dados = {}) {
   return erros;
 }
 
+async function buscarTreinamentoOuResponder(req, res, acao = "") {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({
+      sucesso: false,
+      mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
+    });
+    return null;
+  }
+
+  const treinamento = await Treinamento.buscarPorId(id);
+  if (!treinamento) {
+    const sufixo = acao ? ` para ${acao}` : "";
+    res.status(404).json({
+      sucesso: false,
+      mensagem: `Treinamento não encontrado${sufixo}.`,
+    });
+    return null;
+  }
+
+  return treinamento;
+}
+
 function responderErroInterno(res, mensagem, error) {
   console.error(mensagem, error);
   return res.status(500).json({ sucesso: false, mensagem });
@@ -78,21 +96,8 @@ class TreinamentoController {
   // GET /api/treinamentos/:id
   static async buscarPorId(req, res) {
     try {
-      const id = validarId(req.params.id);
-      if (!id) {
-        return res.status(400).json({
-          sucesso: false,
-          mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
-        });
-      }
-
-      const treinamento = await Treinamento.buscarPorId(id);
-      if (!treinamento) {
-        return res.status(404).json({
-          sucesso: false,
-          mensagem: "Treinamento não encontrado.",
-        });
-      }
+      const treinamento = await buscarTreinamentoOuResponder(req, res);
+      if (!treinamento) return;
 
       return res.status(200).json({ sucesso: true, dados: treinamento });
     } catch (error) {
@@ -122,28 +127,15 @@ class TreinamentoController {
   // PUT /api/treinamentos/:id
   static async atualizar(req, res) {
     try {
-      const id = validarId(req.params.id);
-      if (!id) {
-        return res.status(400).json({
-          sucesso: false,
-          mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
-        });
-      }
-
-      const existente = await Treinamento.buscarPorId(id);
-      if (!existente) {
-        return res.status(404).json({
-          sucesso: false,
-          mensagem: "Treinamento não encontrado para atualização.",
-        });
-      }
+      const existente = await buscarTreinamentoOuResponder(req, res, "atualização");
+      if (!existente) return;
 
       const erros = validarDadosTreinamento(req.body);
       if (erros.length > 0) {
         return res.status(400).json({ sucesso: false, mensagem: erros[0], erros });
       }
 
-      const treinamentoAtualizado = await Treinamento.atualizar(id, req.body);
+      const treinamentoAtualizado = await Treinamento.atualizar(existente.id, req.body);
       return res.status(200).json({
         sucesso: true,
         mensagem: "Treinamento atualizado com sucesso!",
@@ -157,23 +149,10 @@ class TreinamentoController {
   // DELETE /api/treinamentos/:id
   static async excluir(req, res) {
     try {
-      const id = validarId(req.params.id);
-      if (!id) {
-        return res.status(400).json({
-          sucesso: false,
-          mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
-        });
-      }
+      const existente = await buscarTreinamentoOuResponder(req, res, "exclusão");
+      if (!existente) return;
 
-      const existente = await Treinamento.buscarPorId(id);
-      if (!existente) {
-        return res.status(404).json({
-          sucesso: false,
-          mensagem: "Treinamento não encontrado para exclusão.",
-        });
-      }
-
-      await Treinamento.excluir(id);
+      await Treinamento.excluir(existente.id);
       return res.status(200).json({
         sucesso: true,
         mensagem: "Treinamento excluído com sucesso!",

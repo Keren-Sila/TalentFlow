@@ -11,12 +11,20 @@ const INDICADORES_VAZIOS = {
   instrutoresReais: [],
 };
 
+function renderizarDetalhe(res, status, tituloPagina, treinamento, erro = null) {
+  return res.status(status).render("treinamento-detalhe", {
+    tituloPagina,
+    paginaAtiva: "treinamentos",
+    treinamento,
+    erro,
+  });
+}
+
 class PageController {
   // GET /
   static async renderDashboard(req, res) {
     try {
       const indicadores = await Treinamento.obterIndicadores();
-
       return res.render("dashboard", {
         tituloPagina: "Dashboard",
         paginaAtiva: "dashboard",
@@ -37,21 +45,22 @@ class PageController {
   // GET /treinamentos
   static async renderTreinamentos(req, res) {
     const { busca = "", status = "todos", ordenar = "data_asc" } = req.query;
+    const abaAtiva =
+      status === "proximos"
+        ? "agendados"
+        : status === "realizados"
+          ? "realizados"
+          : "treinamentos";
 
     try {
-      const treinamentos = await Treinamento.listarTodos({
-        busca,
-        status: status === "todos" ? undefined : status,
-        ordenar,
-      });
-
-      const indicadores = await Treinamento.obterIndicadores();
-      const abaAtiva =
-        status === "proximos"
-          ? "agendados"
-          : status === "realizados"
-            ? "realizados"
-            : "treinamentos";
+      const [treinamentos, indicadores] = await Promise.all([
+        Treinamento.listarTodos({
+          busca,
+          status: status === "todos" ? undefined : status,
+          ordenar,
+        }),
+        Treinamento.obterIndicadores(),
+      ]);
 
       return res.render("treinamentos", {
         tituloPagina: "Gestão de Treinamentos",
@@ -65,7 +74,7 @@ class PageController {
       console.error("Erro ao carregar página de treinamentos:", error);
       return res.status(500).render("treinamentos", {
         tituloPagina: "Gestão de Treinamentos",
-        paginaAtiva: "treinamentos",
+        paginaAtiva: abaAtiva,
         treinamentos: [],
         indicadores: INDICADORES_VAZIOS,
         filtros: { busca, status, ordenar },
@@ -79,38 +88,36 @@ class PageController {
     try {
       const id = Number(req.params.id);
       if (!Number.isInteger(id) || id <= 0) {
-        return res.status(400).render("treinamento-detalhe", {
-          tituloPagina: "Treinamento Inválido",
-          paginaAtiva: "treinamentos",
-          treinamento: null,
-          erro: "O identificador informado para o treinamento é inválido.",
-        });
+        return renderizarDetalhe(
+          res,
+          400,
+          "Treinamento Inválido",
+          null,
+          "O identificador informado para o treinamento é inválido."
+        );
       }
 
       const treinamento = await Treinamento.buscarPorId(id);
       if (!treinamento) {
-        return res.status(404).render("treinamento-detalhe", {
-          tituloPagina: "Treinamento Não Encontrado",
-          paginaAtiva: "treinamentos",
-          treinamento: null,
-          erro: "O treinamento solicitado não foi encontrado ou já foi removido.",
-        });
+        return renderizarDetalhe(
+          res,
+          404,
+          "Treinamento Não Encontrado",
+          null,
+          "O treinamento solicitado não foi encontrado ou já foi removido."
+        );
       }
 
-      return res.render("treinamento-detalhe", {
-        tituloPagina: `${treinamento.titulo} — Detalhes`,
-        paginaAtiva: "treinamentos",
-        treinamento,
-        erro: null,
-      });
+      return renderizarDetalhe(res, 200, `${treinamento.titulo} — Detalhes`, treinamento);
     } catch (error) {
       console.error("Erro ao carregar detalhes do treinamento:", error);
-      return res.status(500).render("treinamento-detalhe", {
-        tituloPagina: "Erro ao Carregar Detalhes",
-        paginaAtiva: "treinamentos",
-        treinamento: null,
-        erro: "Ocorreu um erro interno ao buscar as informações deste treinamento.",
-      });
+      return renderizarDetalhe(
+        res,
+        500,
+        "Erro ao Carregar Detalhes",
+        null,
+        "Ocorreu um erro interno ao buscar as informações deste treinamento."
+      );
     }
   }
 }

@@ -9,11 +9,18 @@ async function iniciarServidor() {
     await prisma.$connect();
     console.log("✅ Conexão com o banco de dados MySQL estabelecida com sucesso!");
 
-    app.listen(PORT, () => {
+    const servidor = app.listen(PORT, () => {
       console.log(`🚀 TalentFlow rodando em: http://localhost:${PORT}`);
+    });
+
+    process.on("SIGINT", async () => {
+      servidor.close();
+      await prisma.$disconnect();
+      process.exit(0);
     });
   } catch (error) {
     console.error("❌ Erro ao iniciar o servidor TalentFlow:", error.message);
+    await prisma.$disconnect().catch(() => {});
     process.exit(1);
   }
 }
