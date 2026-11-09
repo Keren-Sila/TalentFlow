@@ -11,7 +11,7 @@ const INDICADORES_VAZIOS = {
   instrutoresReais: [],
 };
 
-function renderizarDetalhe(res, status, tituloPagina, treinamento, erro = null) {
+function renderizarDetalhe(res, status, tituloPagina, treinamento = null, erro = null) {
   return res.status(status).render("treinamento-detalhe", {
     tituloPagina,
     paginaAtiva: "treinamentos",
@@ -45,7 +45,7 @@ class PageController {
   // GET /treinamentos
   static async renderTreinamentos(req, res) {
     const { busca = "", status = "todos", ordenar = "data_asc" } = req.query;
-    const abaAtiva =
+    const paginaAtiva =
       status === "proximos"
         ? "agendados"
         : status === "realizados"
@@ -64,7 +64,7 @@ class PageController {
 
       return res.render("treinamentos", {
         tituloPagina: "Gestão de Treinamentos",
-        paginaAtiva: abaAtiva,
+        paginaAtiva,
         treinamentos,
         indicadores,
         filtros: { busca, status, ordenar },
@@ -74,7 +74,7 @@ class PageController {
       console.error("Erro ao carregar página de treinamentos:", error);
       return res.status(500).render("treinamentos", {
         tituloPagina: "Gestão de Treinamentos",
-        paginaAtiva: abaAtiva,
+        paginaAtiva,
         treinamentos: [],
         indicadores: INDICADORES_VAZIOS,
         filtros: { busca, status, ordenar },

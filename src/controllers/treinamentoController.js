@@ -1,23 +1,22 @@
 import Treinamento from "../models/Treinamento.js";
 
-function validarDataCalendario(valorData) {
-  if (!valorData || typeof valorData !== "string") return false;
-
-  const match = valorData.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
+function dataValida(valor) {
+  if (typeof valor !== "string") return false;
+  const match = valor.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
   if (!match) return false;
 
   const [, ano, mes, dia] = match.map(Number);
-  if (ano < 2000 || ano > 2100 || mes < 1 || mes > 12 || dia < 1 || dia > 31) return false;
-
   const dataUTC = new Date(Date.UTC(ano, mes - 1, dia));
   return (
+    ano >= 2000 &&
+    ano <= 2100 &&
     dataUTC.getUTCFullYear() === ano &&
     dataUTC.getUTCMonth() === mes - 1 &&
     dataUTC.getUTCDate() === dia
   );
 }
 
-function validarDadosTreinamento(dados = {}) {
+function validarDados(dados = {}) {
   const erros = [];
   const titulo = typeof dados.titulo === "string" ? dados.titulo.trim() : "";
   const instrutor = typeof dados.instrutor === "string" ? dados.instrutor.trim() : "";
@@ -26,19 +25,15 @@ function validarDadosTreinamento(dados = {}) {
   if (titulo.length < 3 || titulo.length > 150) {
     erros.push("O título é obrigatório e deve ter entre 3 e 150 caracteres.");
   }
-
   if (instrutor.length < 2 || instrutor.length > 120) {
     erros.push("O nome do instrutor é obrigatório e deve ter entre 2 e 120 caracteres.");
   }
-
-  if (!validarDataCalendario(String(dados.data || ""))) {
+  if (!dataValida(String(dados.data || ""))) {
     erros.push("A data informada é inválida. Utilize o formato AAAA-MM-DD.");
   }
-
   if (!Number.isInteger(carga) || carga <= 0 || carga > 1000) {
     erros.push("A carga horária deve ser um número inteiro entre 1 e 1000 horas.");
   }
-
   if (dados.descricao != null && typeof dados.descricao !== "string") {
     erros.push("A descrição deve ser um texto válido.");
   } else if (typeof dados.descricao === "string" && dados.descricao.trim().length > 2000) {
@@ -82,7 +77,6 @@ class TreinamentoController {
     try {
       const { busca, status, ordenar } = req.query;
       const treinamentos = await Treinamento.listarTodos({ busca, status, ordenar });
-
       return res.status(200).json({
         sucesso: true,
         total: treinamentos.length,
@@ -98,7 +92,6 @@ class TreinamentoController {
     try {
       const treinamento = await buscarTreinamentoOuResponder(req, res);
       if (!treinamento) return;
-
       return res.status(200).json({ sucesso: true, dados: treinamento });
     } catch (error) {
       return responderErroInterno(res, "Erro interno ao consultar o treinamento.", error);
@@ -108,7 +101,7 @@ class TreinamentoController {
   // POST /api/treinamentos
   static async criar(req, res) {
     try {
-      const erros = validarDadosTreinamento(req.body);
+      const erros = validarDados(req.body);
       if (erros.length > 0) {
         return res.status(400).json({ sucesso: false, mensagem: erros[0], erros });
       }
@@ -130,7 +123,7 @@ class TreinamentoController {
       const existente = await buscarTreinamentoOuResponder(req, res, "atualização");
       if (!existente) return;
 
-      const erros = validarDadosTreinamento(req.body);
+      const erros = validarDados(req.body);
       if (erros.length > 0) {
         return res.status(400).json({ sucesso: false, mensagem: erros[0], erros });
       }
