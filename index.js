@@ -13,11 +13,15 @@ async function iniciarServidor() {
       console.log(`🚀 TalentFlow rodando em: http://localhost:${PORT}`);
     });
 
-    process.on("SIGINT", async () => {
-      servidor.close();
+    const encerrarAplicacao = async (sinal) => {
+      console.log(`\n🛑 Sinal ${sinal} recebido. Encerrando o TalentFlow com segurança...`);
+      await new Promise((resolve) => servidor.close(resolve));
       await prisma.$disconnect();
       process.exit(0);
-    });
+    };
+
+    process.once("SIGINT", () => encerrarAplicacao("SIGINT"));
+    process.once("SIGTERM", () => encerrarAplicacao("SIGTERM"));
   } catch (error) {
     console.error("❌ Erro ao iniciar o servidor TalentFlow:", error.message);
     await prisma.$disconnect().catch(() => {});

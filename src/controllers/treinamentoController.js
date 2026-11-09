@@ -1,42 +1,45 @@
 import Treinamento from "../models/Treinamento.js";
+import { normalizarDataCalendarioUTC } from "../utils/formatadores.js";
 
 function dataValida(valor) {
-  if (typeof valor !== "string") return false;
-  const match = valor.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
-  if (!match) return false;
+  if (typeof valor !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(valor.trim())) {
+    return false;
+  }
 
-  const [, ano, mes, dia] = match.map(Number);
-  const dataUTC = new Date(Date.UTC(ano, mes - 1, dia));
-  return (
-    ano >= 2000 &&
-    ano <= 2100 &&
-    dataUTC.getUTCFullYear() === ano &&
-    dataUTC.getUTCMonth() === mes - 1 &&
-    dataUTC.getUTCDate() === dia
-  );
+  const dataUTC = normalizarDataCalendarioUTC(valor);
+  if (Number.isNaN(dataUTC.getTime())) return false;
+
+  const ano = dataUTC.getUTCFullYear();
+  return ano >= 2000 && ano <= 2100;
 }
 
 function validarDados(dados = {}) {
   const erros = [];
   const titulo = typeof dados.titulo === "string" ? dados.titulo.trim() : "";
   const instrutor = typeof dados.instrutor === "string" ? dados.instrutor.trim() : "";
+  const data = typeof dados.data === "string" ? dados.data.trim() : "";
   const carga = Number(dados.cargaHoraria);
+  const descricao = dados.descricao;
 
   if (titulo.length < 3 || titulo.length > 150) {
     erros.push("O título é obrigatório e deve ter entre 3 e 150 caracteres.");
   }
+
   if (instrutor.length < 2 || instrutor.length > 120) {
     erros.push("O nome do instrutor é obrigatório e deve ter entre 2 e 120 caracteres.");
   }
-  if (!dataValida(String(dados.data || ""))) {
-    erros.push("A data informada é inválida. Utilize o formato AAAA-MM-DD.");
+
+  if (!dataValida(data)) {
+    erros.push("A data informada é inválida. Utilize uma data real no formato AAAA-MM-DD.");
   }
-  if (!Number.isInteger(carga) || carga <= 0 || carga > 1000) {
+
+  if (!Number.isInteger(carga) || carga < 1 || carga > 1000) {
     erros.push("A carga horária deve ser um número inteiro entre 1 e 1000 horas.");
   }
-  if (dados.descricao != null && typeof dados.descricao !== "string") {
+
+  if (descricao != null && typeof descricao !== "string") {
     erros.push("A descrição deve ser um texto válido.");
-  } else if (typeof dados.descricao === "string" && dados.descricao.trim().length > 2000) {
+  } else if (typeof descricao === "string" && descricao.trim().length > 2000) {
     erros.push("A descrição deve ter no máximo 2000 caracteres.");
   }
 
@@ -55,10 +58,10 @@ async function buscarTreinamentoOuResponder(req, res, acao = "") {
 
   const treinamento = await Treinamento.buscarPorId(id);
   if (!treinamento) {
-    const sufixo = acao ? ` para ${acao}` : "";
+    const complemento = acao ? ` para ${acao}` : "";
     res.status(404).json({
       sucesso: false,
-      mensagem: `Treinamento não encontrado${sufixo}.`,
+      mensagem: `Treinamento não encontrado${complemento}.`,
     });
     return null;
   }
@@ -120,13 +123,13 @@ class TreinamentoController {
   // PUT /api/treinamentos/:id
   static async atualizar(req, res) {
     try {
-      const existente = await buscarTreinamentoOuResponder(req, res, "atualização");
-      if (!existente) return;
-
       const erros = validarDados(req.body);
       if (erros.length > 0) {
         return res.status(400).json({ sucesso: false, mensagem: erros[0], erros });
       }
+
+      const existente = await buscarTreinamentoOuResponder(req, res, "atualização");
+      if (!existente) return;
 
       const treinamentoAtualizado = await Treinamento.atualizar(existente.id, req.body);
       return res.status(200).json({

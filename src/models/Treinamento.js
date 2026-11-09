@@ -13,6 +13,11 @@ const ORDENACAO_PADRAO = {
 };
 
 function prepararDadosParaBanco(dados) {
+  const dataNormalizada = normalizarDataCalendarioUTC(dados.data);
+  if (Number.isNaN(dataNormalizada.getTime())) {
+    throw new Error("Data inválida para persistência no banco de dados.");
+  }
+
   const descricao =
     typeof dados.descricao === "string" && dados.descricao.trim() !== ""
       ? dados.descricao.trim()
@@ -21,7 +26,7 @@ function prepararDadosParaBanco(dados) {
   return {
     titulo: String(dados.titulo).trim(),
     instrutor: String(dados.instrutor).trim(),
-    data: normalizarDataCalendarioUTC(dados.data),
+    data: dataNormalizada,
     cargaHoraria: Number(dados.cargaHoraria),
     descricao,
   };
