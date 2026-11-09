@@ -1,27 +1,18 @@
 import Treinamento from "../models/Treinamento.js";
 
-/**
- * Valida se uma string de data está no formato YYYY-MM-DD (ou ISO válido)
- * e representa um dia real do calendário (rejeitando datas inexistentes como 2026-02-30).
- */
-function validarDataRealCalendario(valorData) {
-  if (!valorData || typeof valorData !== "string") {
-    return false;
-  }
+function validarId(paramId) {
+  const id = Number(paramId);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
 
-  const texto = valorData.trim();
-  const match = texto.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
-  if (!match) {
-    return false;
-  }
+function validarDataCalendario(valorData) {
+  if (!valorData || typeof valorData !== "string") return false;
 
-  const ano = Number(match[1]);
-  const mes = Number(match[2]);
-  const dia = Number(match[3]);
+  const match = valorData.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
+  if (!match) return false;
 
-  if (ano < 2000 || ano > 2100 || mes < 1 || mes > 12 || dia < 1 || dia > 31) {
-    return false;
-  }
+  const [, ano, mes, dia] = match.map(Number);
+  if (ano < 2000 || ano > 2100 || mes < 1 || mes > 12 || dia < 1 || dia > 31) return false;
 
   const dataUTC = new Date(Date.UTC(ano, mes - 1, dia));
   return (
@@ -31,53 +22,29 @@ function validarDataRealCalendario(valorData) {
   );
 }
 
-/**
- * Valida os dados de entrada de um treinamento
- */
-function validarDadosTreinamento(dados) {
+function validarDadosTreinamento(dados = {}) {
   const erros = [];
-
-  if (!dados.titulo || typeof dados.titulo !== "string" || dados.titulo.trim().length < 3) {
-    erros.push("O título é obrigatório e deve ter pelo menos 3 caracteres.");
-  } else if (dados.titulo.trim().length > 150) {
-    erros.push("O título deve ter no máximo 150 caracteres.");
-  }
-
-  if (
-    !dados.instrutor ||
-    typeof dados.instrutor !== "string" ||
-    dados.instrutor.trim().length < 2
-  ) {
-    erros.push("O nome do instrutor é obrigatório e deve ter pelo menos 2 caracteres.");
-  } else if (dados.instrutor.trim().length > 120) {
-    erros.push("O nome do instrutor deve ter no máximo 120 caracteres.");
-  }
-
-  if (!dados.data) {
-    erros.push("A data do treinamento é obrigatória.");
-  } else if (!validarDataRealCalendario(String(dados.data))) {
-    erros.push("A data informada é inválida. Utilize o formato AAAA-MM-DD com um dia válido.");
-  }
-
+  const titulo = typeof dados.titulo === "string" ? dados.titulo.trim() : "";
+  const instrutor = typeof dados.instrutor === "string" ? dados.instrutor.trim() : "";
   const carga = Number(dados.cargaHoraria);
-  if (
-    dados.cargaHoraria === undefined ||
-    dados.cargaHoraria === null ||
-    dados.cargaHoraria === "" ||
-    Number.isNaN(carga) ||
-    !Number.isInteger(carga) ||
-    carga <= 0
-  ) {
-    erros.push("A carga horária é obrigatória e deve ser um número inteiro maior que zero.");
-  } else if (carga > 1000) {
-    erros.push("A carga horária não pode ultrapassar 1000 horas.");
+
+  if (titulo.length < 3 || titulo.length > 150) {
+    erros.push("O título é obrigatório e deve ter entre 3 e 150 caracteres.");
   }
 
-  if (
-    dados.descricao !== undefined &&
-    dados.descricao !== null &&
-    typeof dados.descricao !== "string"
-  ) {
+  if (instrutor.length < 2 || instrutor.length > 120) {
+    erros.push("O nome do instrutor é obrigatório e deve ter entre 2 e 120 caracteres.");
+  }
+
+  if (!validarDataCalendario(String(dados.data || ""))) {
+    erros.push("A data informada é inválida. Utilize o formato AAAA-MM-DD.");
+  }
+
+  if (!Number.isInteger(carga) || carga <= 0 || carga > 1000) {
+    erros.push("A carga horária deve ser um número inteiro entre 1 e 1000 horas.");
+  }
+
+  if (dados.descricao != null && typeof dados.descricao !== "string") {
     erros.push("A descrição deve ser um texto válido.");
   } else if (typeof dados.descricao === "string" && dados.descricao.trim().length > 2000) {
     erros.push("A descrição deve ter no máximo 2000 caracteres.");
@@ -86,11 +53,13 @@ function validarDadosTreinamento(dados) {
   return erros;
 }
 
+function responderErroInterno(res, mensagem, error) {
+  console.error(mensagem, error);
+  return res.status(500).json({ sucesso: false, mensagem });
+}
+
 class TreinamentoController {
-  /**
-   * GET /api/treinamentos
-   * Lista todos os treinamentos (com filtros opcionais via query string)
-   */
+  // GET /api/treinamentos
   static async listar(req, res) {
     try {
       const { busca, status, ordenar } = req.query;
@@ -102,22 +71,15 @@ class TreinamentoController {
         dados: treinamentos,
       });
     } catch (error) {
-      console.error("Erro ao listar treinamentos:", error);
-      return res.status(500).json({
-        sucesso: false,
-        mensagem: "Erro interno ao listar os treinamentos.",
-      });
+      return responderErroInterno(res, "Erro interno ao listar os treinamentos.", error);
     }
   }
 
-  /**
-   * GET /api/treinamentos/:id
-   * Consulta um treinamento específico pelo ID
-   */
+  // GET /api/treinamentos/:id
   static async buscarPorId(req, res) {
     try {
-      const id = Number(req.params.id);
-      if (!Number.isInteger(id) || id <= 0) {
+      const id = validarId(req.params.id);
+      if (!id) {
         return res.status(400).json({
           sucesso: false,
           mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
@@ -132,72 +94,36 @@ class TreinamentoController {
         });
       }
 
-      return res.status(200).json({
-        sucesso: true,
-        dados: treinamento,
-      });
+      return res.status(200).json({ sucesso: true, dados: treinamento });
     } catch (error) {
-      console.error("Erro ao buscar treinamento por ID:", error);
-      return res.status(500).json({
-        sucesso: false,
-        mensagem: "Erro interno ao consultar o treinamento.",
-      });
+      return responderErroInterno(res, "Erro interno ao consultar o treinamento.", error);
     }
   }
 
-  /**
-   * POST /api/treinamentos
-   * Cadastra um novo treinamento
-   */
+  // POST /api/treinamentos
   static async criar(req, res) {
     try {
-      const { titulo, instrutor, data, cargaHoraria, descricao } = req.body;
-      const erros = validarDadosTreinamento({
-        titulo,
-        instrutor,
-        data,
-        cargaHoraria,
-        descricao,
-      });
-
+      const erros = validarDadosTreinamento(req.body);
       if (erros.length > 0) {
-        return res.status(400).json({
-          sucesso: false,
-          mensagem: erros[0],
-          erros,
-        });
+        return res.status(400).json({ sucesso: false, mensagem: erros[0], erros });
       }
 
-      const novoTreinamento = await Treinamento.criar({
-        titulo,
-        instrutor,
-        data,
-        cargaHoraria,
-        descricao,
-      });
-
+      const novoTreinamento = await Treinamento.criar(req.body);
       return res.status(201).json({
         sucesso: true,
         mensagem: "Treinamento cadastrado com sucesso!",
         dados: novoTreinamento,
       });
     } catch (error) {
-      console.error("Erro ao cadastrar treinamento:", error);
-      return res.status(500).json({
-        sucesso: false,
-        mensagem: "Erro interno ao cadastrar o treinamento.",
-      });
+      return responderErroInterno(res, "Erro interno ao cadastrar o treinamento.", error);
     }
   }
 
-  /**
-   * PUT /api/treinamentos/:id
-   * Atualiza um treinamento existente
-   */
+  // PUT /api/treinamentos/:id
   static async atualizar(req, res) {
     try {
-      const id = Number(req.params.id);
-      if (!Number.isInteger(id) || id <= 0) {
+      const id = validarId(req.params.id);
+      if (!id) {
         return res.status(400).json({
           sucesso: false,
           mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
@@ -212,53 +138,27 @@ class TreinamentoController {
         });
       }
 
-      const { titulo, instrutor, data, cargaHoraria, descricao } = req.body;
-      const erros = validarDadosTreinamento({
-        titulo,
-        instrutor,
-        data,
-        cargaHoraria,
-        descricao,
-      });
-
+      const erros = validarDadosTreinamento(req.body);
       if (erros.length > 0) {
-        return res.status(400).json({
-          sucesso: false,
-          mensagem: erros[0],
-          erros,
-        });
+        return res.status(400).json({ sucesso: false, mensagem: erros[0], erros });
       }
 
-      const treinamentoAtualizado = await Treinamento.atualizar(id, {
-        titulo,
-        instrutor,
-        data,
-        cargaHoraria,
-        descricao,
-      });
-
+      const treinamentoAtualizado = await Treinamento.atualizar(id, req.body);
       return res.status(200).json({
         sucesso: true,
         mensagem: "Treinamento atualizado com sucesso!",
         dados: treinamentoAtualizado,
       });
     } catch (error) {
-      console.error("Erro ao atualizar treinamento:", error);
-      return res.status(500).json({
-        sucesso: false,
-        mensagem: "Erro interno ao atualizar o treinamento.",
-      });
+      return responderErroInterno(res, "Erro interno ao atualizar o treinamento.", error);
     }
   }
 
-  /**
-   * DELETE /api/treinamentos/:id
-   * Exclui um treinamento existente
-   */
+  // DELETE /api/treinamentos/:id
   static async excluir(req, res) {
     try {
-      const id = Number(req.params.id);
-      if (!Number.isInteger(id) || id <= 0) {
+      const id = validarId(req.params.id);
+      if (!id) {
         return res.status(400).json({
           sucesso: false,
           mensagem: "ID do treinamento inválido. Informe um número inteiro positivo.",
@@ -274,17 +174,12 @@ class TreinamentoController {
       }
 
       await Treinamento.excluir(id);
-
       return res.status(200).json({
         sucesso: true,
         mensagem: "Treinamento excluído com sucesso!",
       });
     } catch (error) {
-      console.error("Erro ao excluir treinamento:", error);
-      return res.status(500).json({
-        sucesso: false,
-        mensagem: "Erro interno ao excluir o treinamento.",
-      });
+      return responderErroInterno(res, "Erro interno ao excluir o treinamento.", error);
     }
   }
 }

@@ -1,10 +1,18 @@
 import Treinamento from "../models/Treinamento.js";
 
+const INDICADORES_VAZIOS = {
+  totalTreinamentos: 0,
+  totalHoras: 0,
+  proximosCount: 0,
+  realizadosCount: 0,
+  proximosTreinamentos: [],
+  ultimosRealizados: [],
+  todosTreinamentos: [],
+  instrutoresReais: [],
+};
+
 class PageController {
-  /**
-   * GET /
-   * Renderiza a página de Dashboard com indicadores e próximos treinamentos
-   */
+  // GET /
   static async renderDashboard(req, res) {
     try {
       const indicadores = await Treinamento.obterIndicadores();
@@ -20,29 +28,17 @@ class PageController {
       return res.status(500).render("dashboard", {
         tituloPagina: "Dashboard",
         paginaAtiva: "dashboard",
-        indicadores: {
-          totalTreinamentos: 0,
-          totalHoras: 0,
-          proximosCount: 0,
-          realizadosCount: 0,
-          proximosTreinamentos: [],
-          ultimosRealizados: [],
-          todosTreinamentos: [],
-          instrutoresReais: [],
-        },
+        indicadores: INDICADORES_VAZIOS,
         erro: "Não foi possível carregar os indicadores do banco de dados.",
       });
     }
   }
 
-  /**
-   * GET /treinamentos
-   * Renderiza a página de Gestão de Treinamentos com busca e filtros
-   */
+  // GET /treinamentos
   static async renderTreinamentos(req, res) {
-    try {
-      const { busca = "", status = "todos", ordenar = "data_asc" } = req.query;
+    const { busca = "", status = "todos", ordenar = "data_asc" } = req.query;
 
+    try {
       const treinamentos = await Treinamento.listarTodos({
         busca,
         status: status === "todos" ? undefined : status,
@@ -50,7 +46,6 @@ class PageController {
       });
 
       const indicadores = await Treinamento.obterIndicadores();
-
       const abaAtiva =
         status === "proximos"
           ? "agendados"
@@ -72,23 +67,14 @@ class PageController {
         tituloPagina: "Gestão de Treinamentos",
         paginaAtiva: "treinamentos",
         treinamentos: [],
-        indicadores: {
-          totalTreinamentos: 0,
-          totalHoras: 0,
-          proximosCount: 0,
-          realizadosCount: 0,
-          instrutoresReais: [],
-        },
-        filtros: { busca: "", status: "todos", ordenar: "data_asc" },
+        indicadores: INDICADORES_VAZIOS,
+        filtros: { busca, status, ordenar },
         erro: "Erro ao carregar a lista de treinamentos.",
       });
     }
   }
 
-  /**
-   * GET /treinamentos/:id
-   * Renderiza a página de detalhes de um treinamento específico
-   */
+  // GET /treinamentos/:id
   static async renderDetalheTreinamento(req, res) {
     try {
       const id = Number(req.params.id);

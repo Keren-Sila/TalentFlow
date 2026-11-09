@@ -1,106 +1,32 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  normalizarDataCalendarioUTC,
-  obterInicioDiaLocalEmUTC,
-} from "./src/models/Treinamento.js";
 import pageRoutes from "./src/routes/pageRoutes.js";
 import treinamentoRoutes from "./src/routes/treinamentoRoutes.js";
+import { formatadoresView } from "./src/utils/formatadores.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Configuração do Template Engine (EJS)
+// Configuração do EJS
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "src", "views"));
 
-// Middlewares para leitura de JSON e dados de formulários
+// Middlewares para JSON, formulários e arquivos estáticos
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Configuração de arquivos estáticos (CSS, JS, Imagens)
 app.use(express.static(path.join(__dirname, "src", "public")));
 
-// Funções auxiliares globais para as views EJS
-app.locals.formatarData = (data) => {
-  if (!data) return "—";
-  const d = new Date(data);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-};
+// Disponibiliza funções de formatação de datas e status para as views EJS
+Object.assign(app.locals, formatadoresView);
 
-app.locals.formatarDataCurta = (data) => {
-  if (!data) return "—";
-  const d = new Date(data);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "UTC",
-  });
-};
-
-app.locals.formatarDataExtenso = (data) => {
-  if (!data) return "—";
-  const d = new Date(data);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-};
-
-app.locals.formatarDataInput = (data) => {
-  if (!data) return "";
-  const d = new Date(data);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toISOString().split("T")[0];
-};
-
-app.locals.obterStatusTreinamento = (data) => {
-  const hoje = obterInicioDiaLocalEmUTC();
-  const dataTreinamento = normalizarDataCalendarioUTC(data);
-
-  if (dataTreinamento.getTime() === hoje.getTime()) {
-    return {
-      rotulo: "Hoje",
-      classe: "badge-upcoming",
-      icone: "calendar",
-    };
-  }
-
-  if (dataTreinamento.getTime() > hoje.getTime()) {
-    return {
-      rotulo: "Agendado",
-      classe: "badge-upcoming",
-      icone: "calendar",
-    };
-  }
-
-  return {
-    rotulo: "Realizado",
-    classe: "badge-completed",
-    icone: "check-circle",
-  };
-};
-
-// Rotas da API REST (JSON)
+// Rotas da API (JSON) e Rotas de Páginas (HTML/EJS)
 app.use("/api", treinamentoRoutes);
-
-// Rotas das Páginas Web (HTML/EJS)
 app.use("/", pageRoutes);
 
-// Tratamento de rotas não encontradas (404)
+// Tratamento de rota não encontrada (404)
 app.use((req, res) => {
   if (req.originalUrl.startsWith("/api")) {
     return res.status(404).json({
@@ -117,9 +43,9 @@ app.use((req, res) => {
   });
 });
 
-// Middleware global de tratamento de erros
+// Middleware global de tratamento de erros (500)
 app.use((err, req, res, next) => {
-  console.error("Erro não tratado no servidor:", err);
+  console.error("Erro interno no servidor:", err);
 
   if (req.originalUrl.startsWith("/api")) {
     return res.status(500).json({
